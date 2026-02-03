@@ -33,6 +33,7 @@ from app.services.infrastructure import get_infrastructure
 from app.services.da_history import get_da_history
 from app.services.flood import get_flood_info
 from app.services.constraints import get_constraints
+from app.services.ai_summary import generate_ai_summary
 
 router = APIRouter(prefix="/v1", tags=["lookup"])
 
@@ -183,7 +184,20 @@ async def site_report(
     # Step 6: Build map URLs
     maps = build_map_urls(p_lat, p_lng, overlays, geometry)
 
-    # Step 7: Compose response
+    # Step 7: Generate AI summary
+    ai_summary = generate_ai_summary(
+        site_info=site_info,
+        zone=zone_data,
+        overlays=overlays,
+        buildability=buildability,
+        infrastructure=infrastructure,
+        da_history=da_history,
+        flood_info=flood_info,
+        constraints=constraints,
+        height=height_data,
+    )
+
+    # Step 8: Compose response
     return {
         "site_info": site_info,
         "zone": zone_data,
@@ -197,6 +211,7 @@ async def site_report(
         "constraints": constraints,
         "geometry": geometry,
         "maps": maps,
+        "ai_summary": ai_summary,
         "_source": "scc_arcgis",
     }
 

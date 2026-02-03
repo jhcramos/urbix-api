@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.routers import lookup, buildability
+from app.routers import lookup, buildability, ai_summary
 
 app = FastAPI(
     title="Urbix API",
@@ -35,6 +35,7 @@ app.add_middleware(
 
 app.include_router(lookup.router)
 app.include_router(buildability.router)
+app.include_router(ai_summary.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -57,6 +58,8 @@ async def api_info():
             "lookup_lotplan": "/v1/lookup?lot=3&plan=RP12345",
             "lookup_coords": "/v1/lookup?lat=-27.47&lng=153.02",
             "search": "/v1/search?q=Abbott+St+Camp+Hill",
+            "site_report": "/v1/site-report?address=134+Kirbys+Rd+Montville",
+            "ai_summary": "/v1/ai-summary?address=134+Kirbys+Rd+Montville",
         },
     }
 

@@ -1,642 +1,920 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Urbix — Site Report</title>
+    <title>Urbix — Professional Site Report</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* ═══════════════════════════════════════════════════════════════════
+           DESIGN SYSTEM — CSS Custom Properties
+           ═══════════════════════════════════════════════════════════════════ */
         :root {
-            --primary: #1B4F72;
-            --primary-light: #2980B9;
-            --accent: #E67E22;
-            --success: #27AE60;
-            --danger: #E74C3C;
-            --warning: #F39C12;
-            --text: #2C3E50;
-            --text-light: #7F8C8D;
-            --bg: #F8F9FA;
-            --card-bg: #FFFFFF;
-            --border: #E5E8EB;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            /* Light theme */
+            --bg-primary: #F7F8FA;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F0F2F5;
+            --bg-elevated: #FFFFFF;
+            --text-primary: #1A1D23;
+            --text-secondary: #4B5563;
+            --text-tertiary: #9CA3AF;
+            --text-inverse: #FFFFFF;
+            --border-primary: #E5E7EB;
+            --border-secondary: #F3F4F6;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-light: #EFF6FF;
+            --success: #059669;
+            --success-light: #ECFDF5;
+            --success-bg: #D1FAE5;
+            --warning: #D97706;
+            --warning-light: #FFFBEB;
+            --warning-bg: #FEF3C7;
+            --danger: #DC2626;
+            --danger-light: #FEF2F2;
+            --danger-bg: #FEE2E2;
+            --info: #0891B2;
+            --info-light: #ECFEFF;
+            --purple: #7C3AED;
+            --purple-light: #F5F3FF;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --sidebar-width: 240px;
+            --header-height: 64px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #0F1117;
+            --bg-secondary: #1A1D27;
+            --bg-tertiary: #232730;
+            --bg-elevated: #1E2230;
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --text-tertiary: #6B7280;
+            --text-inverse: #1A1D23;
+            --border-primary: #2D3240;
+            --border-secondary: #232730;
+            --accent: #3B82F6;
+            --accent-hover: #60A5FA;
+            --accent-light: #1E3A5F;
+            --success-light: #064E3B;
+            --success-bg: #064E3B;
+            --warning-light: #78350F;
+            --warning-bg: #78350F;
+            --danger-light: #7F1D1D;
+            --danger-bg: #7F1D1D;
+            --info-light: #164E63;
+            --purple-light: #2E1065;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.4);
+        }
 
-        /* Header */
+        /* ═══════════════════════════════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           HEADER
+           ═══════════════════════════════════════════════════════════════════ */
         .header {
-            background: var(--primary);
-            color: white;
-            padding: 16px 32px;
+            height: var(--header-height);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            padding: 0 24px;
             position: sticky;
             top: 0;
             z-index: 1000;
+            backdrop-filter: blur(12px);
         }
         .header-left { display: flex; align-items: center; gap: 12px; }
-        .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-        .header .subtitle { font-size: 13px; opacity: 0.8; }
-        .header-right { font-size: 12px; opacity: 0.6; }
-
-        /* Search Area */
-        .search-area {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 24px 32px;
+        .header-logo {
+            width: 36px; height: 36px;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: white; font-weight: 800;
         }
-        .search-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .search-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .search-tab {
-            padding: 6px 16px;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 13px;
+        .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+        .header-subtitle { font-size: 12px; color: var(--text-tertiary); font-weight: 400; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .theme-toggle {
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-primary);
+            background: var(--bg-tertiary);
             cursor: pointer;
-            background: white;
-            color: var(--text-light);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover { background: var(--border-primary); }
+        .header-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           LAYOUT — Sidebar + Main
+           ═══════════════════════════════════════════════════════════════════ */
+        .app-layout {
+            display: flex;
+            min-height: calc(100vh - var(--header-height));
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+            position: sticky;
+            top: var(--header-height);
+            height: calc(100vh - var(--header-height));
+            overflow-y: auto;
+            padding: 16px 0;
+            display: none;
+            flex-shrink: 0;
+        }
+        .sidebar.visible { display: block; }
+        .sidebar-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            padding: 12px 20px 6px;
+        }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+            text-decoration: none;
+        }
+        .sidebar-nav li a:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .sidebar-nav li a.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+        .sidebar-nav li a .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+        .sidebar-nav li a .nav-badge {
+            margin-left: auto;
+            font-size: 11px;
+            padding: 1px 7px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            padding: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           SEARCH AREA
+           ═══════════════════════════════════════════════════════════════════ */
+        .search-area {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 20px 32px;
+        }
+        .search-container { max-width: 900px; margin: 0 auto; }
+        .search-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+        .search-tab {
+            padding: 6px 14px;
+            border: 1px solid var(--border-primary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
             transition: all 0.2s;
         }
         .search-tab.active {
-            background: var(--primary);
+            background: var(--accent);
             color: white;
-            border-color: var(--primary);
+            border-color: var(--accent);
         }
-        .search-row {
-            display: flex;
-            gap: 12px;
-        }
+        .search-row { display: flex; gap: 10px; }
         .search-row input {
             flex: 1;
             padding: 12px 16px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 15px;
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             transition: border-color 0.2s;
         }
-        .search-row input:focus {
-            border-color: var(--primary-light);
-            outline: none;
-        }
-        .search-row input.small { flex: 0 0 120px; }
+        .search-row input:focus { border-color: var(--accent); outline: none; }
+        .search-row input.small { flex: 0 0 140px; }
         .search-btn {
-            padding: 12px 28px;
-            background: var(--primary);
+            padding: 12px 24px;
+            background: var(--accent);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
             font-weight: 600;
+            font-family: var(--font);
             cursor: pointer;
             transition: background 0.2s;
             white-space: nowrap;
         }
-        .search-btn:hover { background: var(--primary-light); }
-        .search-btn:disabled { background: #95a5a6; cursor: not-allowed; }
+        .search-btn:hover { background: var(--accent-hover); }
+        .search-btn:disabled { background: var(--text-tertiary); cursor: not-allowed; }
         .search-input-group { display: none; }
         .search-input-group.active { display: flex; }
+        .search-input-wrapper { position: relative; flex: 1; }
         .autocomplete-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid var(--border);
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-primary);
             border-top: none;
-            border-radius: 0 0 8px 8px;
-            box-shadow: var(--shadow);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            box-shadow: var(--shadow-lg);
             z-index: 100;
             max-height: 300px;
             overflow-y: auto;
         }
         .autocomplete-item {
-            padding: 10px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
+            padding: 10px 16px; cursor: pointer;
+            border-bottom: 1px solid var(--border-secondary);
+            font-size: 13px;
+            transition: background 0.1s;
         }
-        .autocomplete-item:hover { background: #f0f4ff; }
-        .autocomplete-item .addr { font-weight: 500; }
-        .autocomplete-item .meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
-        .search-input-wrapper { position: relative; flex: 1; }
+        .autocomplete-item:hover { background: var(--accent-light); }
+        .autocomplete-item .addr { font-weight: 500; color: var(--text-primary); }
+        .autocomplete-item .meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 
-        /* Report Container */
-        .report-container {
-            max-width: 960px;
-            margin: 24px auto;
-            padding: 0 24px;
-        }
-
-        /* Loading state */
-        .loading-overlay {
+        /* ═══════════════════════════════════════════════════════════════════
+           QUICK FACTS BAR
+           ═══════════════════════════════════════════════════════════════════ */
+        .quick-facts-bar {
             display: none;
-            text-align: center;
-            padding: 80px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 12px 32px;
         }
-        .loading-overlay.active { display: block; }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
+        .quick-facts-bar.visible { display: block; }
+        .quick-facts-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Welcome state */
-        .welcome {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--text-light);
-        }
-        .welcome h2 { font-size: 28px; color: var(--text); margin-bottom: 8px; }
-        .welcome p { font-size: 16px; max-width: 500px; margin: 0 auto; }
-
-        /* Report Section */
-        .report-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .section-header {
-            background: var(--primary);
-            color: white;
-            padding: 14px 24px;
-            font-size: 16px;
-            font-weight: 600;
+        .quick-fact {
             display: flex;
             align-items: center;
             gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        .section-header.zone { background: #2E86C1; }
-        .section-header.overlays { background: #D35400; }
-        .section-header.buildability { background: #27AE60; }
-        .section-header.transport { background: #8E44AD; }
-        .section-body { padding: 20px 24px; }
+        .quick-fact-icon { font-size: 16px; }
+        .quick-fact-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); font-weight: 600; }
+        .quick-fact-value { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 
-        /* Info Table */
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
+        /* ═══════════════════════════════════════════════════════════════════
+           REPORT CONTAINER
+           ═══════════════════════════════════════════════════════════════════ */
+        .report-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 32px;
         }
-        .info-table td {
-            padding: 10px 16px;
-            border-bottom: 1px solid #f0f2f5;
+
+        /* ═══════════════════════════════════════════════════════════════════
+           LOADING & WELCOME
+           ═══════════════════════════════════════════════════════════════════ */
+        .loading-overlay { display: none; text-align: center; padding: 120px 20px; }
+        .loading-overlay.active { display: block; }
+        .spinner {
+            width: 44px; height: 44px;
+            border: 3px solid var(--border-primary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .loading-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+
+        .welcome { text-align: center; padding: 100px 20px; }
+        .welcome-icon { font-size: 56px; margin-bottom: 16px; }
+        .welcome h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+        .welcome p { font-size: 15px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+        .welcome-hint {
+            margin-top: 32px;
+            display: flex; gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .welcome-chip {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-xl);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+        .welcome-chip:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           REPORT SECTION CARDS
+           ═══════════════════════════════════════════════════════════════════ */
+        .report-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-primary);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .report-section:hover { box-shadow: var(--shadow-md); }
+        .section-header {
+            padding: 16px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-primary);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        .section-header:hover { background: var(--bg-tertiary); }
+        .section-header .section-icon { font-size: 18px; }
+        .section-header .section-chevron {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            transition: transform 0.3s;
+        }
+        .section-header.collapsed .section-chevron { transform: rotate(-90deg); }
+        .section-body {
+            padding: 20px 24px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .section-body.collapsed {
+            max-height: 0 !important;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .section-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           AI SUMMARY CARD
+           ═══════════════════════════════════════════════════════════════════ */
+        .ai-summary-card {
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--purple-light) 100%);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .ai-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .ai-summary-header .ai-icon {
+            width: 40px; height: 40px;
+            background: var(--accent);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .ai-summary-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .ai-summary-header .ai-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+        .ai-summary-text {
             font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .ai-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .ai-metric {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-align: center;
+            border: 1px solid var(--border-primary);
+        }
+        .ai-metric-value { font-size: 22px; font-weight: 800; }
+        .ai-metric-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); font-weight: 600; margin-top: 2px; }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           SCORE GAUGE
+           ═══════════════════════════════════════════════════════════════════ */
+        .score-gauge-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+        .score-gauge {
+            position: relative;
+            width: 100px; height: 100px;
+            flex-shrink: 0;
+        }
+        .score-gauge svg { transform: rotate(-90deg); }
+        .score-gauge-bg { fill: none; stroke: var(--border-primary); stroke-width: 8; }
+        .score-gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .score-gauge-text {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .score-gauge-text .score-number { font-size: 24px; font-weight: 800; display: block; }
+        .score-gauge-text .score-of { font-size: 10px; color: var(--text-tertiary); }
+        .score-info h4 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .score-info p { font-size: 13px; color: var(--text-secondary); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           STRENGTHS & RISKS
+           ═══════════════════════════════════════════════════════════════════ */
+        .sr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+        .sr-column h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .sr-column.strengths h4 { color: var(--success); }
+        .sr-column.risks h4 { color: var(--danger); }
+        .sr-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        .sr-item.strength { background: var(--success-light); color: var(--success); }
+        .sr-item.risk { background: var(--danger-light); color: var(--danger); }
+        .sr-item .sr-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           INFO TABLE
+           ═══════════════════════════════════════════════════════════════════ */
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-secondary);
+            font-size: 14px;
+            vertical-align: top;
         }
         .info-table td:first-child {
             font-weight: 600;
-            color: var(--text-light);
-            width: 160px;
-            white-space: nowrap;
+            color: var(--text-tertiary);
+            width: 150px;
+            font-size: 12px;
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
-        .info-table td:last-child {
-            font-weight: 500;
-        }
+        .info-table td:last-child { font-weight: 500; color: var(--text-primary); }
         .info-table tr:last-child td { border-bottom: none; }
 
-        /* Tags */
-        .tag {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 4px;
+        /* ═══════════════════════════════════════════════════════════════════
+           ZONE BADGE
+           ═══════════════════════════════════════════════════════════════════ */
+        .zone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .zone-badge .zone-swatch {
+            width: 14px; height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .zone-badge a { color: inherit; }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           MAP TABS & CONTAINER
+           ═══════════════════════════════════════════════════════════════════ */
+        .map-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            padding: 4px;
+            overflow-x: auto;
+        }
+        .map-tab {
+            padding: 8px 16px;
             font-size: 12px;
             font-weight: 600;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            color: var(--text-tertiary);
+            transition: all 0.2s;
+            white-space: nowrap;
+            background: transparent;
+            border: none;
+            font-family: var(--font);
         }
-        .tag-zone {
-            background: #2E86C1;
-            color: white;
-            font-size: 15px;
-            padding: 6px 16px;
-            border-radius: 6px;
-        }
-        .tag-freehold { background: #d4edda; color: #155724; }
-        .tag-leasehold { background: #fff3cd; color: #856404; }
-
-        /* Map container */
+        .map-tab.active { background: var(--bg-secondary); color: var(--accent); box-shadow: var(--shadow-sm); }
+        .map-tab:hover { color: var(--text-primary); }
+        .map-panel { display: none; }
+        .map-panel.active { display: block; }
         .map-container {
-            border-radius: 8px;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
             overflow: hidden;
-            border: 1px solid var(--border);
-            margin-top: 12px;
-            min-height: 300px;
+            border: 1px solid var(--border-primary);
+            border-top: none;
+            height: 400px;
         }
-        .map-container.location { height: 380px; }
-        .map-container.small { height: 320px; margin-top: 12px; }
+        .map-container.location { height: 320px; border-radius: var(--radius-md); border-top: 1px solid var(--border-primary); }
+        .map-container.small { height: 280px; border-radius: var(--radius-md); border-top: 1px solid var(--border-primary); }
 
-        /* Zone section */
-        .zone-info {
-            display: flex;
-            align-items: flex-start;
-            gap: 24px;
+        /* ═══════════════════════════════════════════════════════════════════
+           INFRASTRUCTURE MATRIX
+           ═══════════════════════════════════════════════════════════════════ */
+        .infra-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
         }
-        .zone-details { flex: 1; }
-        .zone-map-wrapper { flex: 0 0 300px; }
-        .zone-name { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
-        .zone-category { font-size: 14px; color: var(--text-light); margin-bottom: 12px; }
+        .infra-cell {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .infra-cell.available { border-color: var(--success); background: var(--success-light); }
+        .infra-cell.unavailable { border-color: var(--danger); background: var(--danger-light); }
+        .infra-cell .infra-status-icon { font-size: 28px; margin-bottom: 6px; }
+        .infra-cell .infra-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .infra-cell .infra-detail { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+        .infra-detail-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+        .infra-detail-row .label { color: var(--text-tertiary); }
+        .infra-detail-row .value { font-weight: 600; color: var(--text-primary); }
 
-        /* Overlay items */
+        /* ═══════════════════════════════════════════════════════════════════
+           DA TIMELINE & CARDS
+           ═══════════════════════════════════════════════════════════════════ */
+        .da-timeline {
+            position: relative;
+            padding-left: 24px;
+            margin: 16px 0;
+        }
+        .da-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-primary);
+        }
+        .da-timeline-item {
+            position: relative;
+            padding-bottom: 16px;
+        }
+        .da-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid;
+            background: var(--bg-secondary);
+        }
+        .da-timeline-item.approved::before { border-color: var(--success); background: var(--success-light); }
+        .da-timeline-item.refused::before { border-color: var(--danger); background: var(--danger-light); }
+        .da-timeline-item.in-progress::before { border-color: var(--warning); background: var(--warning-light); }
+        .da-timeline-item.lapsed::before { border-color: var(--text-tertiary); background: var(--bg-tertiary); }
+        .da-timeline-item.decided::before { border-color: var(--text-tertiary); background: var(--bg-tertiary); }
+
+        .da-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            transition: all 0.15s;
+        }
+        .da-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+        .da-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .da-ram-id { font-weight: 700; font-size: 14px; color: var(--accent); }
+        .da-ram-id a { color: var(--accent); }
+        .da-ram-id a:hover { text-decoration: underline; }
+        .da-status-badge {
+            font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+        }
+        .da-status-badge.approved { background: var(--success-bg); color: var(--success); }
+        .da-status-badge.refused { background: var(--danger-bg); color: var(--danger); }
+        .da-status-badge.in-progress { background: var(--warning-bg); color: var(--warning); }
+        .da-status-badge.lapsed { background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px solid var(--border-primary); }
+        .da-status-badge.decided { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .da-description { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+        .da-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .da-category-badge {
+            font-size: 10px; padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .da-cat-mcu { background: #DBEAFE; color: #1E40AF; }
+        .da-cat-rol { background: #FDE68A; color: #92400E; }
+        .da-cat-building { background: #D1FAE5; color: #065F46; }
+        .da-cat-plumbing { background: #E0E7FF; color: #3730A3; }
+        .da-cat-other { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .da-date { font-size: 11px; color: var(--text-tertiary); }
+        .da-view-link {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           OVERLAY GROUPS
+           ═══════════════════════════════════════════════════════════════════ */
         .overlay-group {
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
             margin-bottom: 12px;
             overflow: hidden;
         }
         .overlay-group-header {
-            background: #fef9f0;
+            background: var(--bg-tertiary);
             padding: 12px 16px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid var(--border);
         }
-        .overlay-group-body { padding: 12px 16px; }
+        .overlay-group-body { padding: 10px 16px; }
         .overlay-layer-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 0;
-            font-size: 14px;
-            border-bottom: 1px solid #f8f8f8;
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 0; font-size: 13px;
+            border-bottom: 1px solid var(--border-secondary);
         }
         .overlay-layer-item:last-child { border-bottom: none; }
-        .overlay-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .dot-bushfire { background: #E74C3C; }
-        .dot-flood { background: #3498DB; }
-        .dot-biodiversity { background: #27AE60; }
-        .dot-height { background: #9B59B6; }
-        .dot-heritage { background: #F39C12; }
-        .dot-landslide { background: #E67E22; }
-        .dot-steep { background: #95A5A6; }
-        .dot-coastal { background: #1ABC9C; }
-        .dot-infrastructure { background: #34495E; }
-        .dot-scenic { background: #2ECC71; }
-        .dot-water { background: #2980B9; }
-        .dot-acid { background: #D35400; }
-        .dot-default { background: #7F8C8D; }
+        .overlay-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dot-bushfire { background: #EF4444; }
+        .dot-flood { background: #3B82F6; }
+        .dot-biodiversity { background: #10B981; }
+        .dot-height { background: #8B5CF6; }
+        .dot-heritage { background: #F59E0B; }
+        .dot-landslide { background: #F97316; }
+        .dot-steep { background: #6B7280; }
+        .dot-coastal { background: #06B6D4; }
+        .dot-infrastructure { background: #374151; }
+        .dot-scenic { background: #34D399; }
+        .dot-water { background: #2563EB; }
+        .dot-acid { background: #EA580C; }
+        .dot-default { background: #9CA3AF; }
 
-        .overlay-map-img {
-            width: 100%;
-            height: 200px;
-            object-fit: contain;
-            background: #f5f5f5;
-            border-radius: 6px;
-            margin-top: 8px;
-        }
-
-        /* Buildability Grid */
+        /* ═══════════════════════════════════════════════════════════════════
+           BUILDABILITY
+           ═══════════════════════════════════════════════════════════════════ */
         .build-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
         }
         .build-metric {
-            background: #f8fffe;
-            border: 1px solid #e0f0ed;
-            border-radius: 8px;
-            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: 14px;
             text-align: center;
         }
-        .build-metric .value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--success);
-        }
+        .build-metric .value { font-size: 22px; font-weight: 800; color: var(--accent); }
         .build-metric .label {
-            font-size: 11px;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 4px;
+            font-size: 10px; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 4px; font-weight: 600;
         }
-
-        /* Rules table */
-        .rules-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
+        .rules-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
         .rules-table th {
-            text-align: left;
-            padding: 8px 12px;
-            background: #f0f4f8;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-light);
+            text-align: left; padding: 8px 12px;
+            background: var(--bg-tertiary); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--text-tertiary); font-weight: 700;
         }
         .rules-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f0f2f5;
-            font-size: 14px;
+            padding: 10px 12px; border-bottom: 1px solid var(--border-secondary);
+            font-size: 13px;
         }
-
-        /* Uses */
         .uses-section { margin-top: 16px; }
         .uses-heading {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
         }
         .uses-heading.accepted { color: var(--success); }
         .uses-heading.assessable { color: var(--warning); }
-        .uses-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 12px;
-        }
-        .use-tag {
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .use-tag.accepted { background: #e8f8f0; color: #1a7a4a; }
-        .use-tag.assessable { background: #fef5e6; color: #9a6400; }
+        .uses-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .use-tag { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .use-tag.accepted { background: var(--success-light); color: var(--success); }
+        .use-tag.assessable { background: var(--warning-light); color: var(--warning); }
+        .subdiv-box { padding: 14px 16px; border-radius: var(--radius-md); margin-top: 16px; font-size: 14px; }
+        .subdiv-box.can { background: var(--success-light); border: 1px solid var(--success); color: var(--success); }
+        .subdiv-box.cannot { background: var(--danger-light); border: 1px solid var(--danger); color: var(--danger); }
 
-        /* Constraints */
+        /* ═══════════════════════════════════════════════════════════════════
+           FLOOD
+           ═══════════════════════════════════════════════════════════════════ */
+        .flood-banner {
+            padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 16px;
+            font-size: 14px; font-weight: 600;
+        }
+        .flood-banner.warning { background: var(--warning-light); border: 1px solid var(--warning); color: var(--warning); }
+        .flood-banner.clear { background: var(--success-light); border: 1px solid var(--success); color: var(--success); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           CONSTRAINTS
+           ═══════════════════════════════════════════════════════════════════ */
         .constraint-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px 14px;
-            background: #fff8f0;
-            border: 1px solid #fdebd0;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 13px;
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 14px; background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px; font-size: 13px; line-height: 1.5;
         }
         .constraint-icon { font-size: 18px; flex-shrink: 0; }
 
-        /* Subdivision */
-        .subdiv-box {
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
+        /* ═══════════════════════════════════════════════════════════════════
+           EXTERNAL LINKS
+           ═══════════════════════════════════════════════════════════════════ */
+        .external-links {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
         }
-        .subdiv-box.can { background: #e8f8f0; border: 1px solid #b8e6cc; }
-        .subdiv-box.cannot { background: #fdf0f0; border: 1px solid #f0c0c0; }
+        .ext-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-xl);
+            font-size: 12px; font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .ext-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); text-decoration: none; }
 
-        /* Transport */
-        .transport-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f2f5;
-            font-size: 14px;
-        }
-
-        /* Infrastructure Section */
-        .section-header.infrastructure { background: #0E6655; }
-        .section-header.da-history { background: #1B2631; }
-        .section-header.flood { background: #D4AC0D; }
-        .section-header.constraints { background: #922B21; }
-        .section-header.contour { background: #6C3483; }
-        .infra-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        .infra-card {
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid;
-        }
-        .infra-card.available {
-            background: #e8f8f0;
-            border-color: #27AE60;
-        }
-        .infra-card.unavailable {
-            background: #fdf0f0;
-            border-color: #E74C3C;
-        }
-        .infra-card.info {
-            background: #eaf2f8;
-            border-color: #2980B9;
-        }
-        .infra-card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .infra-card-icon { font-size: 28px; }
-        .infra-card-title {
-            font-size: 16px;
-            font-weight: 700;
-        }
-        .infra-card-status {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .infra-card-status.yes { color: #1a7a4a; }
-        .infra-card-status.no { color: #c0392b; }
-        .infra-card-status.neutral { color: #2471a3; }
-        .infra-card-details {
-            font-size: 13px;
-            color: var(--text-light);
-        }
-        .infra-card-details .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-        }
-        .infra-card-details .detail-label { font-weight: 500; }
-        .infra-card-details .detail-value { font-weight: 600; color: var(--text); }
-
-        /* Development Applications */
-        .da-card {
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 8px;
-            background: white;
-        }
-        .da-card.nearby {
-            background: #f8f9fa;
-        }
-        .da-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .da-ram-id {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--primary);
-        }
-        .da-status {
-            font-size: 12px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
-        .da-status.approved { background: #d4edda; color: #155724; }
-        .da-status.refused { background: #f8d7da; color: #721c24; }
-        .da-status.lapsed { background: #fff3cd; color: #856404; }
-        .da-status.in-progress { background: #cce5ff; color: #004085; }
-        .da-status.decided { background: #e2e3e5; color: #383d41; }
-        .da-description {
-            font-size: 13px;
-            margin-bottom: 6px;
-            color: var(--text);
-        }
-        .da-meta {
-            font-size: 12px;
-            color: var(--text-light);
-            display: flex;
-            gap: 12px;
-        }
-
-        /* Flood Information */
-        .flood-summary {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-        .flood-summary.flood-warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-        }
-        .flood-summary.flood-clear {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        .flood-details {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-        .flood-item {
-            padding: 4px 0;
-            font-size: 14px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .flood-item:last-child {
-            border-bottom: none;
-        }
-        .flood-study {
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .flood-study:last-child {
-            border-bottom: none;
-        }
-
-        /* Constraints */
-        .constraint-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-            font-size: 14px;
-        }
-        .constraint-item:last-child {
-            border-bottom: none;
-        }
-        .constraint-item.environmental {
-            color: #155724;
-        }
-
-        /* Zone Legend */
+        /* ═══════════════════════════════════════════════════════════════════
+           ZONE LEGEND
+           ═══════════════════════════════════════════════════════════════════ */
         .zone-legend {
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(4px);
+            background: var(--bg-elevated);
             padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 11px;
+            border-radius: var(--radius-sm);
+            font-size: 11px; line-height: 1.6;
+            max-height: 280px; overflow-y: auto;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-primary);
+        }
+        .zone-legend-title { font-weight: 700; font-size: 11px; margin-bottom: 4px; }
+        .zone-legend-item { display: flex; align-items: center; gap: 5px; white-space: nowrap; color: var(--text-secondary); }
+        .zone-legend-item.active { font-weight: 700; color: var(--text-primary); }
+        .zone-legend-swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           DISCLAIMER
+           ═══════════════════════════════════════════════════════════════════ */
+        .disclaimer {
+            margin-top: 16px; padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 12px; color: var(--text-tertiary);
             line-height: 1.6;
-            max-height: 280px;
-            overflow-y: auto;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-        }
-        .zone-legend-title {
-            font-weight: 700;
-            font-size: 11px;
-            margin-bottom: 4px;
-            color: var(--text);
-        }
-        .zone-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-        .zone-legend-item.active {
-            font-weight: 700;
-            color: var(--text);
-        }
-        .zone-legend-swatch {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            flex-shrink: 0;
-            border: 1px solid rgba(0,0,0,0.15);
         }
 
-        /* Responsive */
+        /* ═══════════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════════════ */
         @media (max-width: 768px) {
-            .header { padding: 12px 16px; }
+            .sidebar { display: none !important; }
+            .header { padding: 0 16px; }
             .search-area { padding: 16px; }
-            .report-container { padding: 0 12px; margin: 12px auto; }
-            .zone-info { flex-direction: column; }
-            .zone-map-wrapper { flex: 1; width: 100%; }
+            .report-container { padding: 16px; }
+            .sr-grid { grid-template-columns: 1fr; }
+            .infra-matrix { grid-template-columns: 1fr; }
             .build-grid { grid-template-columns: repeat(2, 1fr); }
             .search-row { flex-direction: column; }
             .search-row input.small { flex: 1; }
+            .quick-facts-inner { padding: 0 8px; }
+            .ai-metrics { grid-template-columns: repeat(2, 1fr); }
         }
 
-        /* Print styles */
+        /* ═══════════════════════════════════════════════════════════════════
+           PRINT
+           ═══════════════════════════════════════════════════════════════════ */
         @media print {
-            .header, .search-area { display: none; }
-            .report-container { max-width: 100%; margin: 0; padding: 0; }
-            .report-section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+            .header, .search-area, .sidebar, .quick-facts-bar, .theme-toggle { display: none !important; }
+            .report-container { max-width: 100%; margin: 0; padding: 16px; }
+            .report-section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+            .ai-summary-card { break-inside: avoid; }
+            .section-body.collapsed { max-height: none !important; padding: 20px 24px !important; }
+            body { background: white; color: #1a1a1a; }
         }
     </style>
 </head>
 <body>
+    <!-- ═══ HEADER ═══ -->
     <div class="header">
         <div class="header-left">
-            <h1>🏗️ Urbix</h1>
-            <span class="subtitle">Sunshine Coast Planning & Site Report</span>
+            <div class="header-logo">U</div>
+            <div>
+                <div class="header-title">Urbix</div>
+                <div class="header-subtitle">Sunshine Coast Planning Intelligence</div>
+            </div>
         </div>
-        <div class="header-right">Powered by SCC Planning Data</div>
+        <div class="header-right">
+            <span class="header-badge">SCC Planning Data</span>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        </div>
     </div>
 
+    <!-- ═══ SEARCH ═══ -->
     <div class="search-area">
         <div class="search-container">
             <div class="search-tabs">
@@ -644,58 +922,100 @@
                 <div class="search-tab" data-tab="lotplan" onclick="switchTab('lotplan')">📋 Lot / Plan</div>
                 <div class="search-tab" data-tab="coords" onclick="switchTab('coords')">🗺️ Coordinates</div>
             </div>
-
             <div class="search-input-group active" id="tab-address">
                 <div class="search-row">
                     <div class="search-input-wrapper">
-                        <input type="text" id="addressInput" placeholder="Search address (e.g. 134 Kirbys Rd Montville)..." autocomplete="off">
+                        <input type="text" id="addressInput" placeholder="Search any Sunshine Coast address..." autocomplete="off">
                         <div id="autocompleteList" class="autocomplete-list" style="display:none;"></div>
                     </div>
-                    <button class="search-btn" onclick="searchByAddress()">Search</button>
+                    <button class="search-btn" onclick="searchByAddress()">Generate Report</button>
                 </div>
             </div>
-
             <div class="search-input-group" id="tab-lotplan">
                 <div class="search-row">
                     <input type="text" id="lotInput" placeholder="Lot (e.g. 6)" class="small">
-                    <input type="text" id="planInput" placeholder="Plan (e.g. RP901532)" class="small" style="flex:1;">
-                    <button class="search-btn" onclick="searchByLotPlan()">Search</button>
+                    <input type="text" id="planInput" placeholder="Plan (e.g. RP901532)" style="flex:1;">
+                    <button class="search-btn" onclick="searchByLotPlan()">Generate Report</button>
                 </div>
             </div>
-
             <div class="search-input-group" id="tab-coords">
                 <div class="search-row">
-                    <input type="text" id="latInput" placeholder="Latitude (e.g. -26.7086)" class="small">
-                    <input type="text" id="lngInput" placeholder="Longitude (e.g. 152.9072)" class="small">
-                    <button class="search-btn" onclick="searchByCoords()">Search</button>
+                    <input type="text" id="latInput" placeholder="Latitude" class="small">
+                    <input type="text" id="lngInput" placeholder="Longitude" class="small">
+                    <button class="search-btn" onclick="searchByCoords()">Generate Report</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="report-container">
-        <div id="welcome" class="welcome">
-            <h2>🏠 Sunshine Coast Site Report</h2>
-            <p>Search for any property on the Sunshine Coast to generate a full planning report with zoning, overlays, and buildability analysis.</p>
-        </div>
+    <!-- ═══ QUICK FACTS BAR ═══ -->
+    <div id="quickFactsBar" class="quick-facts-bar">
+        <div class="quick-facts-inner" id="quickFactsInner"></div>
+    </div>
 
-        <div id="loading" class="loading-overlay">
-            <div class="spinner"></div>
-            <div style="font-size:16px;color:var(--text);">Generating site report...</div>
-            <div style="font-size:13px;color:var(--text-light);margin-top:4px;">Querying SCC planning services</div>
-        </div>
+    <!-- ═══ APP LAYOUT ═══ -->
+    <div class="app-layout">
+        <!-- Sidebar Nav -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-label">Report Sections</div>
+            <ul class="sidebar-nav" id="sidebarNav"></ul>
+        </nav>
 
-        <div id="report" style="display:none;"></div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="report-container">
+                <div id="welcome" class="welcome">
+                    <div class="welcome-icon">🏗️</div>
+                    <h2>Sunshine Coast Site Report</h2>
+                    <p>Search for any property on the Sunshine Coast to generate a comprehensive planning intelligence report.</p>
+                    <div class="welcome-hint">
+                        <div class="welcome-chip" onclick="quickSearch('134 Kirbys Rd Montville')">134 Kirbys Rd Montville</div>
+                        <div class="welcome-chip" onclick="quickSearch('10 Ocean St Maroochydore')">10 Ocean St Maroochydore</div>
+                        <div class="welcome-chip" onclick="quickSearchLP('6','RP901532')">Lot 6 RP901532</div>
+                    </div>
+                </div>
+                <div id="loading" class="loading-overlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Generating site report...</div>
+                    <div class="loading-sub">Querying 8 SCC planning services in parallel</div>
+                </div>
+                <div id="report" style="display:none;"></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
     <script>
+    /* ═══════════════════════════════════════════════════════════════════════
+       APP STATE
+       ═══════════════════════════════════════════════════════════════════════ */
     const API = '';
     let searchTimeout;
     let maps = {};
+    let currentData = null;
 
-    // ─── Tab switching ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       THEME
+       ═══════════════════════════════════════════════════════════════════════ */
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        document.querySelector('.theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('urbix-theme', next);
+    }
+    (function initTheme() {
+        const saved = localStorage.getItem('urbix-theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.querySelector('.theme-toggle').textContent = '☀️';
+        }
+    })();
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       TAB SWITCHING
+       ═══════════════════════════════════════════════════════════════════════ */
     function switchTab(tab) {
         document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.search-input-group').forEach(g => g.classList.remove('active'));
@@ -703,7 +1023,9 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    // ─── Autocomplete ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       AUTOCOMPLETE
+       ═══════════════════════════════════════════════════════════════════════ */
     const addrInput = document.getElementById('addressInput');
     const acList = document.getElementById('autocompleteList');
 
@@ -713,11 +1035,9 @@
         if (q.length < 3) { acList.style.display = 'none'; return; }
         searchTimeout = setTimeout(() => doAutocomplete(q), 300);
     });
-
     addrInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { acList.style.display = 'none'; searchByAddress(); }
     });
-
     document.addEventListener('click', (e) => {
         if (!acList.contains(e.target) && e.target !== addrInput) acList.style.display = 'none';
     });
@@ -749,32 +1069,50 @@
         }
     }
 
-    // ─── Search handlers ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       SEARCH HANDLERS
+       ═══════════════════════════════════════════════════════════════════════ */
     function searchByAddress() {
         const addr = addrInput.value.trim();
         if (!addr) return;
         loadReport(`address=${encodeURIComponent(addr)}`);
     }
-
     function searchByLotPlan() {
         const lot = document.getElementById('lotInput').value.trim();
         const plan = document.getElementById('planInput').value.trim();
         if (!lot || !plan) return;
         loadReport(`lot=${lot}&plan=${plan}`);
     }
-
     function searchByCoords() {
         const lat = document.getElementById('latInput').value.trim();
         const lng = document.getElementById('lngInput').value.trim();
         if (!lat || !lng) return;
         loadReport(`lat=${lat}&lng=${lng}`);
     }
+    function quickSearch(addr) {
+        addrInput.value = addr;
+        searchByAddress();
+    }
+    function quickSearchLP(lot, plan) {
+        document.getElementById('lotInput').value = lot;
+        document.getElementById('planInput').value = plan;
+        switchTab('lotplan');
+        searchByLotPlan();
+    }
 
-    // ─── Load Report ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       LOAD REPORT
+       ═══════════════════════════════════════════════════════════════════════ */
     async function loadReport(params) {
         document.getElementById('welcome').style.display = 'none';
         document.getElementById('report').style.display = 'none';
         document.getElementById('loading').classList.add('active');
+        document.getElementById('quickFactsBar').classList.remove('visible');
+        document.getElementById('sidebar').classList.remove('visible');
+
+        // Destroy old maps
+        Object.values(maps).forEach(m => { try { m.remove(); } catch {} });
+        maps = {};
 
         try {
             const resp = await fetch(`${API}/v1/site-report?${params}`);
@@ -783,19 +1121,91 @@
                 throw new Error(err.detail || 'Request failed');
             }
             const data = await resp.json();
+            currentData = data;
             renderReport(data);
         } catch (err) {
             document.getElementById('loading').classList.remove('active');
             document.getElementById('report').style.display = 'block';
             document.getElementById('report').innerHTML = `
                 <div class="report-section">
-                    <div class="section-header" style="background:var(--danger);">❌ Error</div>
-                    <div class="section-body"><p>${err.message}</p></div>
+                    <div class="section-header"><span class="section-icon">❌</span> Error</div>
+                    <div class="section-body"><p style="color:var(--danger);">${err.message}</p></div>
                 </div>`;
         }
     }
 
-    // ─── Render Report ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       SECTION COLLAPSE
+       ═══════════════════════════════════════════════════════════════════════ */
+    function toggleSection(id) {
+        const header = document.querySelector(`#section-${id} .section-header`);
+        const body = document.querySelector(`#section-${id} .section-body`);
+        if (!header || !body) return;
+        header.classList.toggle('collapsed');
+        body.classList.toggle('collapsed');
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       MAP TAB SWITCH
+       ═══════════════════════════════════════════════════════════════════════ */
+    function switchMapTab(tabName) {
+        document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.map-panel').forEach(p => p.classList.remove('active'));
+        document.querySelector(`.map-tab[data-map="${tabName}"]`).classList.add('active');
+        document.getElementById(`mapPanel-${tabName}`).classList.add('active');
+        // Invalidate map size
+        if (maps[tabName]) setTimeout(() => maps[tabName].invalidateSize(), 100);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCORE GAUGE SVG
+       ═══════════════════════════════════════════════════════════════════════ */
+    function renderScoreGauge(score, color) {
+        const radius = 42;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (score / 100) * circumference;
+        return `
+        <div class="score-gauge">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle class="score-gauge-bg" cx="50" cy="50" r="${radius}"/>
+                <circle class="score-gauge-fill" cx="50" cy="50" r="${radius}"
+                    stroke="${color}"
+                    stroke-dasharray="${circumference}"
+                    stroke-dashoffset="${offset}"/>
+            </svg>
+            <div class="score-gauge-text">
+                <span class="score-number" style="color:${color}">${score}</span>
+                <span class="score-of">/100</span>
+            </div>
+        </div>`;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       DA STATUS HELPER
+       ═══════════════════════════════════════════════════════════════════════ */
+    function getDAStatus(app) {
+        const decision = (app.decision || '').toLowerCase();
+        const progress = (app.progress || '').toLowerCase();
+        if (decision.includes('approved')) return { cls: 'approved', text: 'Approved' };
+        if (decision.includes('refused')) return { cls: 'refused', text: 'Refused' };
+        if (decision.includes('lapsed')) return { cls: 'lapsed', text: 'Lapsed' };
+        if (progress.includes('progress') || progress.includes('current') || !app.date_decided) return { cls: 'in-progress', text: 'In Progress' };
+        return { cls: 'decided', text: app.decision || 'Decided' };
+    }
+
+    function getDACategoryBadge(category) {
+        const cat = (category || '').toLowerCase();
+        if (cat.includes('material change')) return '<span class="da-category-badge da-cat-mcu">MCU</span>';
+        if (cat.includes('reconfigur')) return '<span class="da-category-badge da-cat-rol">ROL</span>';
+        if (cat.includes('building')) return '<span class="da-category-badge da-cat-building">Building</span>';
+        if (cat.includes('plumbing')) return '<span class="da-category-badge da-cat-plumbing">Plumbing</span>';
+        if (category) return `<span class="da-category-badge da-cat-other">${category.length > 20 ? category.substring(0, 20) + '…' : category}</span>`;
+        return '';
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       RENDER REPORT
+       ═══════════════════════════════════════════════════════════════════════ */
     function renderReport(data) {
         document.getElementById('loading').classList.remove('active');
         const reportDiv = document.getElementById('report');
@@ -809,261 +1219,572 @@
         const transport = data.transport || [];
         const geometry = data.geometry;
         const mapUrls = data.maps || {};
+        const da = data.da_history || {};
+        const infra = data.infrastructure || {};
+        const flood = data.flood_info || {};
+        const constraints = data.constraints || {};
+        const aiSummary = data.ai_summary || {};
+        const qf = aiSummary.quick_facts || {};
+        const devPot = aiSummary.development_potential || {};
+
+        // ── Quick Facts Bar ──
+        const qfBar = document.getElementById('quickFactsInner');
+        qfBar.innerHTML = `
+            <div class="quick-fact">
+                <span class="quick-fact-icon">📐</span>
+                <div><div class="quick-fact-label">Lot Size</div>
+                <div class="quick-fact-value">${qf.area_sqm ? Number(qf.area_sqm).toLocaleString() + ' m²' : '—'}</div></div>
+            </div>
+            <div class="quick-fact">
+                <div style="width:14px;height:14px;border-radius:3px;background:${qf.zone_color || '#999'};border:1px solid rgba(0,0,0,0.1);"></div>
+                <div><div class="quick-fact-label">Zone</div>
+                <div class="quick-fact-value">${(qf.zone || '—').replace(' Zone', '')}</div></div>
+            </div>
+            <div class="quick-fact">
+                <span class="quick-fact-icon">${qf.flood_risk === 'Yes' ? '🌊' : '✅'}</span>
+                <div><div class="quick-fact-label">Flood Risk</div>
+                <div class="quick-fact-value">${qf.flood_risk || '—'}</div></div>
+            </div>
+            <div class="quick-fact">
+                <span class="quick-fact-icon">📋</span>
+                <div><div class="quick-fact-label">DAs on Parcel</div>
+                <div class="quick-fact-value">${qf.da_count ?? '—'}</div></div>
+            </div>
+            <div class="quick-fact">
+                <span class="quick-fact-icon">⚠️</span>
+                <div><div class="quick-fact-label">Overlays</div>
+                <div class="quick-fact-value">${qf.overlay_count ?? 0}</div></div>
+            </div>
+            <div class="quick-fact">
+                <span class="quick-fact-icon" style="font-size:14px;font-weight:800;color:${aiSummary.score_color || '#999'}">${aiSummary.score || '—'}</span>
+                <div><div class="quick-fact-label">Score</div>
+                <div class="quick-fact-value" style="color:${aiSummary.score_color || 'inherit'}">${aiSummary.score_label || '—'}</div></div>
+            </div>
+        `;
+        document.getElementById('quickFactsBar').classList.add('visible');
+
+        // ── Sidebar Navigation ──
+        const sidebarSections = [
+            { id: 'ai', icon: '🤖', label: 'AI Analysis' },
+            { id: 'site', icon: '📋', label: 'Site Info' },
+            { id: 'zone', icon: '🗺️', label: 'Zone' },
+            { id: 'overlays', icon: '⚠️', label: 'Overlays', badge: overlays.length },
+            { id: 'da', icon: '📋', label: 'DA History', badge: da.on_parcel_count || 0 },
+            { id: 'infra', icon: '🚰', label: 'Infrastructure' },
+            { id: 'flood', icon: '🌊', label: 'Flood' },
+            { id: 'constraints', icon: '🔒', label: 'Constraints' },
+            { id: 'maps', icon: '🗺️', label: 'Maps' },
+            { id: 'buildability', icon: '🏗️', label: 'Buildability' },
+            { id: 'links', icon: '🔗', label: 'External Links' },
+        ];
+        document.getElementById('sidebarNav').innerHTML = sidebarSections.map(s =>
+            `<li><a href="#section-${s.id}">
+                <span class="nav-icon">${s.icon}</span> ${s.label}
+                ${s.badge !== undefined ? `<span class="nav-badge">${s.badge}</span>` : ''}
+            </a></li>`
+        ).join('');
+        document.getElementById('sidebar').classList.add('visible');
 
         let html = '';
 
-        // ── 1. Site Information ──
-        const tenureClass = (si.tenure||'').toLowerCase().includes('freehold') ? 'tag-freehold' : 'tag-leasehold';
-        html += `
-        <div class="report-section">
-            <div class="section-header">📋 Site Information</div>
+        // ══════════════════════════════════════════════════════════════════
+        // 1. AI SUMMARY CARD
+        // ══════════════════════════════════════════════════════════════════
+        const strengths = aiSummary.strengths || [];
+        const risks = aiSummary.risks || [];
+        html += `<div id="section-ai" class="ai-summary-card">
+            <div class="ai-summary-header">
+                <div class="ai-icon">🤖</div>
+                <div>
+                    <h3>AI Site Analysis</h3>
+                    <div class="ai-label">Powered by Urbix Planning Intelligence</div>
+                </div>
+            </div>
+            <div class="score-gauge-container">
+                ${renderScoreGauge(aiSummary.score || 50, aiSummary.score_color || '#999')}
+                <div class="score-info">
+                    <h4 style="color:${aiSummary.score_color || 'inherit'}">${aiSummary.score_label || 'Unknown'}</h4>
+                    <p>Site Constraints Score — ${aiSummary.score || 0}/100<br>Higher score = easier to develop</p>
+                </div>
+            </div>
+            <div class="ai-summary-text">${aiSummary.summary || ''}</div>
+            <div class="ai-metrics">
+                <div class="ai-metric"><div class="ai-metric-value" style="color:var(--accent)">${qf.area_sqm ? Math.round(qf.area_sqm).toLocaleString() : '—'}</div><div class="ai-metric-label">Area m²</div></div>
+                <div class="ai-metric"><div class="ai-metric-value" style="color:${devPot.zone_color || '#999'}">${(devPot.zone_code || '—').replace(' Zone', '')}</div><div class="ai-metric-label" style="font-size:9px;">Zone</div></div>
+                <div class="ai-metric"><div class="ai-metric-value">${devPot.max_height_m || '—'}${devPot.max_height_m ? 'm' : ''}</div><div class="ai-metric-label">Max Height</div></div>
+                <div class="ai-metric"><div class="ai-metric-value">${devPot.max_dwellings ?? '—'}</div><div class="ai-metric-label">Max Dwellings</div></div>
+                <div class="ai-metric"><div class="ai-metric-value">${qf.da_count ?? 0}</div><div class="ai-metric-label">DAs on Parcel</div></div>
+                <div class="ai-metric"><div class="ai-metric-value" style="color:${aiSummary.score_color || '#999'}">${aiSummary.score || '—'}</div><div class="ai-metric-label">Score</div></div>
+            </div>`;
+
+        // Strengths & Risks grid
+        if (strengths.length || risks.length) {
+            html += `<div class="sr-grid">
+                <div class="sr-column strengths">
+                    <h4>✅ Strengths</h4>
+                    ${strengths.map(s => `<div class="sr-item strength"><span class="sr-icon">✓</span> ${s}</div>`).join('')}
+                    ${strengths.length === 0 ? '<div style="font-size:13px;color:var(--text-tertiary);">None identified</div>' : ''}
+                </div>
+                <div class="sr-column risks">
+                    <h4>⚠️ Risks</h4>
+                    ${risks.map(r => `<div class="sr-item risk"><span class="sr-icon">!</span> ${r}</div>`).join('')}
+                    ${risks.length === 0 ? '<div style="font-size:13px;color:var(--text-tertiary);">None identified</div>' : ''}
+                </div>
+            </div>`;
+        }
+        html += `</div>`;
+
+        // ══════════════════════════════════════════════════════════════════
+        // 2. SITE INFORMATION
+        // ══════════════════════════════════════════════════════════════════
+        const tenureTag = (si.tenure || '').toLowerCase().includes('freehold')
+            ? `<span style="background:var(--success-light);color:var(--success);padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600;">${si.tenure}</span>`
+            : (si.tenure ? `<span style="background:var(--warning-light);color:var(--warning);padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600;">${si.tenure}</span>` : '—');
+
+        html += `<div id="section-site" class="report-section">
+            <div class="section-header" onclick="toggleSection('site')">
+                <span class="section-icon">📋</span> Site Information
+                <span class="section-chevron">▼</span>
+            </div>
             <div class="section-body">
                 <table class="info-table">
                     <tr><td>Address</td><td>${si.address || '—'}</td></tr>
                     <tr><td>Lot / Plan</td><td><strong>${si.lot_plan || '—'}</strong></td></tr>
                     <tr><td>Area</td><td>${si.area_sqm ? Number(si.area_sqm).toLocaleString() + ' m²' : '—'}</td></tr>
-                    <tr><td>Tenure</td><td>${si.tenure ? `<span class="tag ${tenureClass}">${si.tenure}</span>` : '—'}</td></tr>
+                    <tr><td>Tenure</td><td>${tenureTag}</td></tr>
                     <tr><td>Locality</td><td>${si.locality || '—'}</td></tr>
                     <tr><td>LGA</td><td>${si.shire_name || 'Sunshine Coast Regional Council'}</td></tr>
                 </table>
-                <div id="locationMap" class="map-container location"></div>
+                <div id="locationMap" class="map-container location" style="margin-top:16px;"></div>
             </div>
         </div>`;
 
-        // ── 2. Zone ──
-        html += `
-        <div class="report-section">
-            <div class="section-header zone">🗺️ Planning Zone</div>
+        // ══════════════════════════════════════════════════════════════════
+        // 3. ZONE
+        // ══════════════════════════════════════════════════════════════════
+        const zoneColor = devPot.zone_color || '#999';
+        const zoneLink = devPot.zone_link;
+        const zoneName = zone.code || zone.label || '—';
+        const zoneDisplay = zoneLink
+            ? `<a href="${zoneLink}" target="_blank" style="color:inherit;text-decoration:none;">${zoneName}</a>`
+            : zoneName;
+
+        html += `<div id="section-zone" class="report-section">
+            <div class="section-header" onclick="toggleSection('zone')">
+                <span class="section-icon">🗺️</span> Planning Zone
+                <span class="section-chevron">▼</span>
+            </div>
             <div class="section-body">
-                <div class="zone-info">
-                    <div class="zone-details">
-                        <div class="zone-name">${zone.code || zone.label || '—'}</div>
-                        <div class="zone-category">${zone.category || ''}</div>
-                        <table class="info-table" style="margin-top:12px;">
-                            <tr><td>Zone Code</td><td>${zone.label || zone.code || '—'}</td></tr>
-                            <tr><td>Category</td><td>${zone.category || '—'}</td></tr>
-                            <tr><td>Planning Scheme</td><td>Sunshine Coast Planning Scheme 2014</td></tr>
-                            ${height ? `<tr><td>Max Height</td><td><strong>${height.label || height.height_m + 'm'}</strong></td></tr>` : ''}
-                        </table>
-                    </div>
-                    <div class="zone-map-wrapper">
-                        <div id="zoneMapThumb" class="map-container small"></div>
-                    </div>
+                <div class="zone-badge" style="background:${zoneColor}22; border:2px solid ${zoneColor};">
+                    <span class="zone-swatch" style="background:${zoneColor};"></span>
+                    ${zoneDisplay}
                 </div>
-                <div id="zoneMap" class="map-container" style="height:400px; margin-top:12px;"></div>
+                <div style="font-size:13px;color:var(--text-tertiary);margin-top:8px;">${zone.category || ''} — Sunshine Coast Planning Scheme 2014</div>
+                <table class="info-table" style="margin-top:16px;">
+                    <tr><td>Zone Code</td><td>${zone.label || zone.code || '—'}</td></tr>
+                    <tr><td>Category</td><td>${zone.category || '—'}</td></tr>
+                    ${height ? `<tr><td>Max Height</td><td><strong>${height.label || height.height_m + 'm'}</strong></td></tr>` : ''}
+                    ${zoneLink ? `<tr><td>Planning Scheme</td><td><a href="${zoneLink}" target="_blank">View Zone Code →</a></td></tr>` : ''}
+                </table>
             </div>
         </div>`;
 
-        // ── 3. Overlays ──
-        if (overlays.length > 0) {
-            html += `
-            <div class="report-section">
-                <div class="section-header overlays">⚠️ Planning Overlays (${overlays.length} ${overlays.length === 1 ? 'category' : 'categories'})</div>
-                <div class="section-body">`;
-
-            overlays.forEach((group, idx) => {
-                const catLower = group.category.toLowerCase();
-                let dotClass = 'dot-default';
-                let icon = '📌';
-                if (catLower.includes('bushfire')) { dotClass = 'dot-bushfire'; icon = '🔥'; }
-                else if (catLower.includes('flood')) { dotClass = 'dot-flood'; icon = '🌊'; }
-                else if (catLower.includes('biodiversity') || catLower.includes('waterway') || catLower.includes('wetland')) { dotClass = 'dot-biodiversity'; icon = '🌿'; }
-                else if (catLower.includes('height')) { dotClass = 'dot-height'; icon = '📏'; }
-                else if (catLower.includes('heritage') || catLower.includes('character')) { dotClass = 'dot-heritage'; icon = '🏛️'; }
-                else if (catLower.includes('landslide')) { dotClass = 'dot-landslide'; icon = '⛰️'; }
-                else if (catLower.includes('steep') || catLower.includes('slope')) { dotClass = 'dot-steep'; icon = '📐'; }
-                else if (catLower.includes('coastal')) { dotClass = 'dot-coastal'; icon = '🏖️'; }
-                else if (catLower.includes('infrastructure')) { dotClass = 'dot-infrastructure'; icon = '🏗️'; }
-                else if (catLower.includes('scenic')) { dotClass = 'dot-scenic'; icon = '🌄'; }
-                else if (catLower.includes('water')) { dotClass = 'dot-water'; icon = '💧'; }
-                else if (catLower.includes('acid')) { dotClass = 'dot-acid'; icon = '⚗️'; }
-
-                html += `
-                <div class="overlay-group">
-                    <div class="overlay-group-header">${icon} ${group.category}</div>
-                    <div class="overlay-group-body">`;
-
-                (group.layers || []).forEach(layer => {
-                    let extra = '';
-                    if (layer.height_m) extra = ` — <strong>${layer.height_m}m</strong>`;
-                    html += `
-                        <div class="overlay-layer-item">
-                            <div class="overlay-dot ${dotClass}"></div>
-                            <span>${layer.label || layer.name}${extra}</span>
-                        </div>`;
-                });
-
-                // Overlay map
-                const layerIds = (group.layers || []).map(l => l.layer_id);
-                if (layerIds.length > 0 && mapUrls.bbox) {
-                    const bbox = mapUrls.bbox;
-                    const overlayMapUrl = `https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Overlays_SCC/MapServer/export?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}&bboxSR=4326&imageSR=4326&size=500,250&layers=show:${layerIds.join(',')}&format=png&transparent=true&f=image`;
-                    html += `<div id="overlayMap_${idx}" class="map-container small"></div>`;
-                }
-
-                html += `</div></div>`;
+        // ══════════════════════════════════════════════════════════════════
+        // 4. OVERLAYS
+        // ══════════════════════════════════════════════════════════════════
+        const overlayCount = overlays.reduce((s, g) => s + (g.layers || []).length, 0);
+        html += `<div id="section-overlays" class="report-section">
+            <div class="section-header" onclick="toggleSection('overlays')">
+                <span class="section-icon">⚠️</span> Planning Overlays
+                <span class="section-badge" style="background:${overlayCount ? 'var(--warning-bg)' : 'var(--success-bg)'};color:${overlayCount ? 'var(--warning)' : 'var(--success)'};">${overlayCount} overlay${overlayCount !== 1 ? 's' : ''}</span>
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">`;
+        if (overlays.length === 0) {
+            html += `<p style="color:var(--success);font-weight:500;">✅ No planning overlays on this parcel</p>`;
+        }
+        overlays.forEach((group, idx) => {
+            const catL = group.category.toLowerCase();
+            let dotCls = 'dot-default', icon = '📌';
+            if (catL.includes('bushfire')) { dotCls = 'dot-bushfire'; icon = '🔥'; }
+            else if (catL.includes('flood')) { dotCls = 'dot-flood'; icon = '🌊'; }
+            else if (catL.includes('biodiversity') || catL.includes('waterway') || catL.includes('wetland')) { dotCls = 'dot-biodiversity'; icon = '🌿'; }
+            else if (catL.includes('height')) { dotCls = 'dot-height'; icon = '📏'; }
+            else if (catL.includes('heritage') || catL.includes('character')) { dotCls = 'dot-heritage'; icon = '🏛️'; }
+            else if (catL.includes('landslide')) { dotCls = 'dot-landslide'; icon = '⛰️'; }
+            else if (catL.includes('steep') || catL.includes('slope')) { dotCls = 'dot-steep'; icon = '📐'; }
+            else if (catL.includes('coastal')) { dotCls = 'dot-coastal'; icon = '🏖️'; }
+            else if (catL.includes('infrastructure')) { dotCls = 'dot-infrastructure'; icon = '🏗️'; }
+            else if (catL.includes('scenic')) { dotCls = 'dot-scenic'; icon = '🌄'; }
+            else if (catL.includes('water')) { dotCls = 'dot-water'; icon = '💧'; }
+            else if (catL.includes('acid')) { dotCls = 'dot-acid'; icon = '⚗️'; }
+            html += `<div class="overlay-group">
+                <div class="overlay-group-header">${icon} ${group.category}</div>
+                <div class="overlay-group-body">`;
+            (group.layers || []).forEach(layer => {
+                let extra = '';
+                if (layer.height_m) extra = ` — <strong>${layer.height_m}m</strong>`;
+                html += `<div class="overlay-layer-item"><div class="overlay-dot ${dotCls}"></div><span>${layer.label || layer.name}${extra}</span></div>`;
             });
-
             html += `</div></div>`;
+        });
+        html += `</div></div>`;
+
+        // ══════════════════════════════════════════════════════════════════
+        // 5. DEVELOPMENT APPLICATIONS
+        // ══════════════════════════════════════════════════════════════════
+        const onParcel = da.on_parcel || [];
+        const nearby = da.nearby || [];
+        const portalLink = da.portal_link;
+        const lotPlan = si.lot_plan || '';
+
+        html += `<div id="section-da" class="report-section">
+            <div class="section-header" onclick="toggleSection('da')">
+                <span class="section-icon">📋</span> Development Applications
+                <span class="section-badge" style="background:var(--accent-light);color:var(--accent);">${da.on_parcel_count || 0} on parcel</span>
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">`;
+
+        // Summary bar
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-tertiary);border-radius:var(--radius-md);margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:14px;font-weight:600;">${da.summary || 'No data available'}</div>
+            ${portalLink ? `<a href="${portalLink}" target="_blank" class="ext-link" style="font-size:12px;">🔗 Development-i Portal →</a>` : ''}
+        </div>`;
+
+        // On-parcel DA timeline
+        if (onParcel.length > 0) {
+            html += `<h4 style="margin-bottom:12px;font-size:14px;">📍 On This Parcel (${onParcel.length})</h4>`;
+            html += `<div class="da-timeline">`;
+            onParcel.forEach(app => {
+                const st = getDAStatus(app);
+                const portalUrl = portalLink || '#';
+                html += `<div class="da-timeline-item ${st.cls}">
+                    <div class="da-card">
+                        <div class="da-card-top">
+                            <span class="da-ram-id"><a href="${portalUrl}" target="_blank">${app.ram_id || 'N/A'}</a></span>
+                            <span class="da-status-badge ${st.cls}">${st.text}</span>
+                        </div>
+                        <div class="da-description">${app.description || 'No description'}</div>
+                        <div class="da-meta">
+                            ${getDACategoryBadge(app.category)}
+                            ${app.date_received ? `<span class="da-date">📅 ${app.date_received}</span>` : ''}
+                            ${app.date_decided ? `<span class="da-date">✅ ${app.date_decided}</span>` : ''}
+                            ${portalLink ? `<a href="${portalUrl}" target="_blank" class="da-view-link">View Details →</a>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
         }
 
-        // ── 3b. Development Applications ──
-        const da = data.da_history || {};
-        html += renderDevelopmentApplications(da, si);
+        // Nearby DAs
+        if (nearby.length > 0) {
+            html += `<h4 style="margin:20px 0 12px;font-size:14px;">📍 Nearby Applications within 500m (${nearby.length})</h4>`;
+            const showN = nearby.slice(0, 8);
+            showN.forEach(app => {
+                const st = getDAStatus(app);
+                html += `<div class="da-card" style="margin-bottom:8px;">
+                    <div class="da-card-top">
+                        <span class="da-ram-id">${app.ram_id || 'N/A'}</span>
+                        <span class="da-status-badge ${st.cls}">${st.text}</span>
+                    </div>
+                    <div class="da-description">${app.description || 'No description'}</div>
+                    <div class="da-meta">
+                        ${getDACategoryBadge(app.category)}
+                        ${app.date_received ? `<span class="da-date">📅 ${app.date_received}</span>` : ''}
+                    </div>
+                </div>`;
+            });
+            if (nearby.length > 8) {
+                html += `<p style="font-size:13px;color:var(--text-tertiary);margin-top:8px;">... and ${nearby.length - 8} more within 500m</p>`;
+            }
+        }
 
-        // ── 3c. Infrastructure Services ──
-        const infra = data.infrastructure || {};
-        html += renderInfrastructure(infra, si);
+        if (!onParcel.length && !nearby.length) {
+            html += `<p style="color:var(--text-tertiary);">No development applications found on parcel or within 500m.</p>`;
+        }
 
-        // ── 3d. Flood Information ──
-        const flood = data.flood_info || {};
-        html += renderFloodInformation(flood, si);
+        // Precedent analysis
+        const prec = aiSummary.precedent_analysis || {};
+        if (prec.total_count > 0) {
+            const outlookColor = prec.outlook === 'positive' ? 'var(--success)' : prec.outlook === 'negative' ? 'var(--danger)' : 'var(--warning)';
+            html += `<div style="margin-top:20px;padding:14px 16px;background:var(--bg-tertiary);border-radius:var(--radius-md);border-left:4px solid ${outlookColor};">
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Precedent Analysis</div>
+                <div style="font-size:13px;color:var(--text-secondary);">
+                    <span style="font-weight:600;color:var(--success);">${prec.approved_count || 0} approved</span> ·
+                    <span style="font-weight:600;color:var(--danger);">${prec.refused_count || 0} refused</span> ·
+                    <span style="font-weight:600;color:var(--warning);">${prec.in_progress_count || 0} in progress</span> ·
+                    <span style="color:var(--text-tertiary);">${prec.lapsed_count || 0} lapsed</span>
+                </div>
+                <div style="font-size:13px;margin-top:6px;color:${outlookColor};font-weight:500;">${prec.assessment || ''}</div>
+            </div>`;
+        }
+        html += `</div></div>`;
 
-        // ── 3e. Site Constraints & Easements ──
-        const constraints = data.constraints || {};
-        html += renderConstraints(constraints, si);
+        // ══════════════════════════════════════════════════════════════════
+        // 6. INFRASTRUCTURE
+        // ══════════════════════════════════════════════════════════════════
+        const water = infra.water || {};
+        const sewer = infra.sewer || {};
+        const stormwater = infra.stormwater || {};
 
-        // ── 3f. Contour Map ──
-        html += `
-        <div class="report-section">
-            <div class="section-header contour">📐 Contours & Elevation</div>
+        html += `<div id="section-infra" class="report-section">
+            <div class="section-header" onclick="toggleSection('infra')">
+                <span class="section-icon">🚰</span> Infrastructure Services
+                <span class="section-chevron">▼</span>
+            </div>
             <div class="section-body">
-                <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">QLD LiDAR contours (1m/5m) — zoom in for detail</p>
-                <div id="contourMap" class="map-container small"></div>
+                <div class="infra-matrix">
+                    <div class="infra-cell ${water.available ? 'available' : 'unavailable'}">
+                        <div class="infra-status-icon">${water.available ? '✅' : '❌'}</div>
+                        <div class="infra-name">Water Supply</div>
+                        <div class="infra-detail">
+                            ${water.available
+                                ? `<div class="infra-detail-row"><span class="label">Mains</span><span class="value">${water.mains_count || 0} within 100m</span></div>
+                                   ${water.nearest_diameter_mm ? `<div class="infra-detail-row"><span class="label">Diameter</span><span class="value">${water.nearest_diameter_mm}mm</span></div>` : ''}
+                                   <div class="infra-detail-row"><span class="label">Hydrants</span><span class="value">${water.hydrants_nearby || 0}</span></div>`
+                                : '<div style="color:var(--danger);font-weight:500;font-size:11px;">Tank/bore required</div>'
+                            }
+                        </div>
+                    </div>
+                    <div class="infra-cell ${sewer.available ? 'available' : 'unavailable'}">
+                        <div class="infra-status-icon">${sewer.available ? '✅' : '❌'}</div>
+                        <div class="infra-name">Sewer</div>
+                        <div class="infra-detail">
+                            ${sewer.available
+                                ? `<div class="infra-detail-row"><span class="label">Mains</span><span class="value">${sewer.mains_count || 0} within 100m</span></div>
+                                   ${sewer.nearest_diameter_mm ? `<div class="infra-detail-row"><span class="label">Diameter</span><span class="value">${sewer.nearest_diameter_mm}mm</span></div>` : ''}
+                                   ${sewer.nearest_type ? `<div class="infra-detail-row"><span class="label">Type</span><span class="value">${sewer.nearest_type}</span></div>` : ''}`
+                                : '<div style="color:var(--danger);font-weight:500;font-size:11px;">On-site system required</div>'
+                            }
+                        </div>
+                    </div>
+                    <div class="infra-cell ${stormwater.available ? 'available' : 'unavailable'}">
+                        <div class="infra-status-icon">${stormwater.available ? '✅' : '⚠️'}</div>
+                        <div class="infra-name">Stormwater</div>
+                        <div class="infra-detail">
+                            <div class="infra-detail-row"><span class="label">Pipes</span><span class="value">${stormwater.pipe_count || 0}</span></div>
+                            <div class="infra-detail-row"><span class="label">Pits</span><span class="value">${stormwater.pit_count || 0}</span></div>
+                            ${stormwater.drainage_info ? `<div class="infra-detail-row"><span class="label">Drainage</span><span class="value">${stormwater.drainage_info}</span></div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">
+                    <span style="color:#2563EB;">━━</span> Water &nbsp;
+                    <span style="color:#8B4513;">━━</span> Sewer &nbsp;
+                    <span style="color:#10B981;">━━</span> Stormwater &nbsp;
+                    <span style="color:#EF4444;">●</span> Hydrants
+                </div>
+                <div id="infraMap" class="map-container small"></div>
             </div>
         </div>`;
 
-        // ── 4. Buildability ──
+        // ══════════════════════════════════════════════════════════════════
+        // 7. FLOOD INFORMATION
+        // ══════════════════════════════════════════════════════════════════
+        html += `<div id="section-flood" class="report-section">
+            <div class="section-header" onclick="toggleSection('flood')">
+                <span class="section-icon">🌊</span> Flood Information
+                <span class="section-badge" style="background:${flood.has_flood_data ? 'var(--warning-bg)' : 'var(--success-bg)'};color:${flood.has_flood_data ? 'var(--warning)' : 'var(--success)'};">${flood.has_flood_data ? 'Affected' : 'Clear'}</span>
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="flood-banner ${flood.has_flood_data ? 'warning' : 'clear'}">${flood.summary || 'No flood information available'}</div>`;
+        if (flood.has_flood_data && flood.flood_data) {
+            const fd = flood.flood_data;
+            html += `<table class="info-table">
+                ${fd.max_flood_level ? `<tr><td>Flood Level</td><td>${fd.max_flood_level}</td></tr>` : ''}
+                ${fd.min_floor_level ? `<tr><td>Min Floor Level</td><td><strong>${fd.min_floor_level}</strong></td></tr>` : ''}
+                ${fd.freeboard ? `<tr><td>Freeboard</td><td>${fd.freeboard}</td></tr>` : ''}
+                ${fd.velocity ? `<tr><td>Velocity</td><td>${fd.velocity}</td></tr>` : ''}
+                ${fd.scenario ? `<tr><td>Scenario</td><td>${fd.scenario}</td></tr>` : ''}
+                ${fd.source ? `<tr><td>Source</td><td>${fd.source}</td></tr>` : ''}
+            </table>`;
+        }
+        if (flood.has_flood_studies && flood.flood_studies?.length) {
+            html += `<h4 style="margin:16px 0 8px;font-size:14px;">📚 Flood Studies in Area</h4>`;
+            flood.flood_studies.forEach(study => {
+                html += `<div style="padding:8px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;">
+                    <strong>${study.name}</strong>
+                    ${study.authority || study.date ? `<div style="color:var(--text-tertiary);">${[study.authority, study.date].filter(Boolean).join(' • ')}</div>` : ''}
+                </div>`;
+            });
+        }
+        html += `</div></div>`;
+
+        // ══════════════════════════════════════════════════════════════════
+        // 8. CONSTRAINTS
+        // ══════════════════════════════════════════════════════════════════
+        html += `<div id="section-constraints" class="report-section">
+            <div class="section-header" onclick="toggleSection('constraints')">
+                <span class="section-icon">🔒</span> Site Constraints & Easements
+                <span class="section-badge" style="background:${constraints.has_constraints ? 'var(--warning-bg)' : 'var(--success-bg)'};color:${constraints.has_constraints ? 'var(--warning)' : 'var(--success)'};">${constraints.has_constraints ? 'Found' : 'Clear'}</span>
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div style="padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-md);margin-bottom:16px;font-size:14px;font-weight:600;">${constraints.summary || 'No data'}</div>`;
+        if (constraints.easements?.length) {
+            html += `<h4 style="margin-bottom:8px;font-size:14px;">📐 Easements (${constraints.easements.length})</h4>`;
+            constraints.easements.forEach(e => {
+                html += `<div class="constraint-item"><span class="constraint-icon">📐</span><div><strong>${e.purpose || e.name || 'Easement'}</strong>${e.area ? ` (${e.area})` : ''}${e.in_favour ? `<div style="font-size:12px;color:var(--text-tertiary);">In favour: ${e.in_favour}</div>` : ''}</div></div>`;
+            });
+        }
+        if (constraints.covenants?.length) {
+            html += `<h4 style="margin:16px 0 8px;font-size:14px;">📜 Covenants (${constraints.covenants.length})</h4>`;
+            constraints.covenants.forEach(c => {
+                html += `<div class="constraint-item"><span class="constraint-icon">📜</span><div><strong>${c.purpose || c.name || 'Covenant'}</strong>${c.in_favour ? `<div style="font-size:12px;color:var(--text-tertiary);">In favour: ${c.in_favour}</div>` : ''}</div></div>`;
+            });
+        }
+        const envC = [];
+        if (constraints.koala?.status) envC.push(constraints.koala.status);
+        if (constraints.esa?.status) envC.push(constraints.esa.status);
+        if (envC.length) {
+            html += `<h4 style="margin:16px 0 8px;font-size:14px;">🌿 Environmental Constraints</h4>`;
+            envC.forEach(c => { html += `<div class="constraint-item"><span class="constraint-icon">🌿</span> ${c}</div>`; });
+        }
+        if (!constraints.has_constraints) {
+            html += `<p style="color:var(--success);font-weight:500;">✅ No significant site constraints identified</p>`;
+        }
+        html += `</div></div>`;
+
+        // ══════════════════════════════════════════════════════════════════
+        // 9. MAPS (tabbed)
+        // ══════════════════════════════════════════════════════════════════
+        html += `<div id="section-maps" class="report-section">
+            <div class="section-header" onclick="toggleSection('maps')">
+                <span class="section-icon">🗺️</span> Interactive Maps
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body" style="padding:0;">
+                <div class="map-tabs">
+                    <button class="map-tab active" data-map="zone" onclick="switchMapTab('zone')">🗺️ Zone Map</button>
+                    <button class="map-tab" data-map="infra2" onclick="switchMapTab('infra2')">🚰 Infrastructure</button>
+                    <button class="map-tab" data-map="contour" onclick="switchMapTab('contour')">📐 Contours</button>
+                    <button class="map-tab" data-map="overlayAll" onclick="switchMapTab('overlayAll')">⚠️ Overlays</button>
+                </div>
+                <div id="mapPanel-zone" class="map-panel active"><div id="zoneMap" class="map-container"></div></div>
+                <div id="mapPanel-infra2" class="map-panel"><div id="infraMap2" class="map-container"></div></div>
+                <div id="mapPanel-contour" class="map-panel"><div id="contourMap" class="map-container"></div></div>
+                <div id="mapPanel-overlayAll" class="map-panel"><div id="overlayAllMap" class="map-container"></div></div>
+            </div>
+        </div>`;
+
+        // ══════════════════════════════════════════════════════════════════
+        // 10. BUILDABILITY
+        // ══════════════════════════════════════════════════════════════════
         if (build && !build.error) {
             const rules = build.rules || {};
             const envelope = build.buildable_envelope || {};
             const uses = build.uses || {};
             const subdiv = build.subdivision || {};
-            const constraints = build.constraints || [];
+            const bConstraints = build.constraints || [];
 
-            html += `
-            <div class="report-section">
-                <div class="section-header buildability">🏗️ Buildability Analysis</div>
+            html += `<div id="section-buildability" class="report-section">
+                <div class="section-header" onclick="toggleSection('buildability')">
+                    <span class="section-icon">🏗️</span> Buildability Analysis
+                    <span class="section-chevron">▼</span>
+                </div>
                 <div class="section-body">
                     <div class="build-grid">
-                        ${rules.max_height_m ? `<div class="build-metric"><div class="value">${rules.max_height_m}m</div><div class="label">Max Height</div></div>` : ''}
-                        ${rules.max_storeys ? `<div class="build-metric"><div class="value">${rules.max_storeys}</div><div class="label">Max Storeys</div></div>` : ''}
-                        ${rules.max_site_cover_pct ? `<div class="build-metric"><div class="value">${rules.max_site_cover_pct}%</div><div class="label">Site Cover</div></div>` : ''}
+                        ${rules.max_height_m != null ? `<div class="build-metric"><div class="value">${rules.max_height_m}m</div><div class="label">Max Height</div></div>` : ''}
+                        ${rules.max_storeys != null ? `<div class="build-metric"><div class="value">${rules.max_storeys}</div><div class="label">Max Storeys</div></div>` : ''}
+                        ${rules.max_site_cover_pct != null ? `<div class="build-metric"><div class="value">${rules.max_site_cover_pct}%</div><div class="label">Site Cover</div></div>` : ''}
                         ${envelope.max_gfa_sqm ? `<div class="build-metric"><div class="value">${Math.round(envelope.max_gfa_sqm).toLocaleString()}</div><div class="label">Max GFA (m²)</div></div>` : ''}
-                        ${envelope.max_footprint_sqm ? `<div class="build-metric"><div class="value">${Math.round(envelope.max_footprint_sqm).toLocaleString()}</div><div class="label">Max Footprint (m²)</div></div>` : ''}
+                        ${envelope.max_footprint_sqm ? `<div class="build-metric"><div class="value">${Math.round(envelope.max_footprint_sqm).toLocaleString()}</div><div class="label">Max Footprint</div></div>` : ''}
                         ${envelope.max_dwellings !== undefined ? `<div class="build-metric"><div class="value">${envelope.max_dwellings}</div><div class="label">Max Dwellings</div></div>` : ''}
                     </div>
-
                     <table class="rules-table">
                         <tr><th colspan="2">Planning Rules — ${zone.code || 'Zone'}</th></tr>
-                        ${rules.front_setback_m !== null && rules.front_setback_m !== undefined ? `<tr><td>Front Setback</td><td>${rules.front_setback_m}m</td></tr>` : ''}
-                        ${rules.side_setback_m !== null && rules.side_setback_m !== undefined ? `<tr><td>Side Setback</td><td>${rules.side_setback_m}m</td></tr>` : ''}
-                        ${rules.rear_setback_m !== null && rules.rear_setback_m !== undefined ? `<tr><td>Rear Setback</td><td>${rules.rear_setback_m}m</td></tr>` : ''}
+                        ${rules.front_setback_m != null ? `<tr><td>Front Setback</td><td>${rules.front_setback_m}m</td></tr>` : ''}
+                        ${rules.side_setback_m != null ? `<tr><td>Side Setback</td><td>${rules.side_setback_m}m</td></tr>` : ''}
+                        ${rules.rear_setback_m != null ? `<tr><td>Rear Setback</td><td>${rules.rear_setback_m}m</td></tr>` : ''}
                         ${rules.min_lot_size_sqm ? `<tr><td>Min Lot Size</td><td>${Number(rules.min_lot_size_sqm).toLocaleString()} m²</td></tr>` : ''}
                         ${rules.min_frontage_m ? `<tr><td>Min Frontage</td><td>${rules.min_frontage_m}m</td></tr>` : ''}
                     </table>`;
 
-            // Uses
-            if ((uses.accepted && uses.accepted.length) || (uses.assessable && uses.assessable.length)) {
+            if ((uses.accepted?.length) || (uses.assessable?.length)) {
                 html += `<div class="uses-section">`;
-                if (uses.accepted && uses.accepted.length) {
-                    html += `<div class="uses-heading accepted">✅ Accepted Uses</div>
-                        <div class="uses-list">${uses.accepted.map(u => `<span class="use-tag accepted">${u}</span>`).join('')}</div>`;
+                if (uses.accepted?.length) {
+                    html += `<div class="uses-heading accepted">✅ Accepted Uses</div><div class="uses-list">${uses.accepted.map(u => `<span class="use-tag accepted">${u}</span>`).join('')}</div>`;
                 }
-                if (uses.assessable && uses.assessable.length) {
-                    html += `<div class="uses-heading assessable">📋 Assessable Uses</div>
-                        <div class="uses-list">${uses.assessable.map(u => `<span class="use-tag assessable">${u}</span>`).join('')}</div>`;
+                if (uses.assessable?.length) {
+                    html += `<div class="uses-heading assessable">📋 Assessable Uses</div><div class="uses-list">${uses.assessable.map(u => `<span class="use-tag assessable">${u}</span>`).join('')}</div>`;
                 }
                 html += `</div>`;
             }
-
-            // Subdivision
             if (subdiv.can_subdivide !== undefined) {
-                if (subdiv.can_subdivide) {
-                    html += `<div class="subdiv-box can">✅ <strong>Subdivision potential:</strong> Up to ${subdiv.max_new_lots} lots (min ${Number(subdiv.min_lot_size_sqm||0).toLocaleString()} m² each)</div>`;
-                } else {
-                    html += `<div class="subdiv-box cannot">❌ <strong>Cannot subdivide</strong> under current zoning (lot too small or zone doesn't permit)</div>`;
-                }
+                html += subdiv.can_subdivide
+                    ? `<div class="subdiv-box can">✅ <strong>Subdivision potential:</strong> Up to ${subdiv.max_new_lots} lots (min ${Number(subdiv.min_lot_size_sqm||0).toLocaleString()} m² each)</div>`
+                    : `<div class="subdiv-box cannot">❌ <strong>Cannot subdivide</strong> under current zoning</div>`;
             }
-
-            // Constraints
-            if (constraints.length) {
-                html += `<div style="margin-top:16px;"><h4 style="font-size:14px;margin-bottom:8px;">⚠️ Site Constraints</h4>`;
-                constraints.forEach(c => {
-                    const icon = c.icon || '📌';
-                    const text = c.text || c;
-                    html += `<div class="constraint-item"><span class="constraint-icon">${icon}</span><span>${text}</span></div>`;
+            if (bConstraints.length) {
+                html += `<div style="margin-top:16px;"><h4 style="font-size:14px;margin-bottom:8px;">⚠️ Overlay Constraints</h4>`;
+                bConstraints.forEach(c => {
+                    html += `<div class="constraint-item"><span class="constraint-icon">${c.icon || '📌'}</span><span>${c.text || c}</span></div>`;
                 });
                 html += `</div>`;
             }
-
-            html += `
-                    <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;font-size:12px;color:var(--text-light);">
-                        ${build.disclaimer || 'Indicative only. Always verify with Council.'}
-                    </div>
-                </div>
-            </div>`;
+            html += `<div class="disclaimer">${build.disclaimer || 'Indicative only. Always verify with Council.'}</div>
+                </div></div>`;
         }
 
-        // ── 5. Transport ──
+        // ══════════════════════════════════════════════════════════════════
+        // 11. TRANSPORT
+        // ══════════════════════════════════════════════════════════════════
         if (transport.length > 0) {
-            html += `
-            <div class="report-section">
-                <div class="section-header transport">🛣️ Transport Hierarchy</div>
+            html += `<div class="report-section">
+                <div class="section-header" onclick="toggleSection('transport')">
+                    <span class="section-icon">🛣️</span> Transport
+                    <span class="section-chevron">▼</span>
+                </div>
                 <div class="section-body">`;
             transport.forEach(t => {
-                html += `<div class="transport-item">
+                html += `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;">
                     <strong>${t.heading || ''}</strong>
-                    <span style="color:var(--text-light)">${t.label || ''}</span>
+                    <span style="color:var(--text-tertiary)">${t.label || ''}</span>
                 </div>`;
             });
             html += `</div></div>`;
         }
 
+        // ══════════════════════════════════════════════════════════════════
+        // 12. EXTERNAL LINKS
+        // ══════════════════════════════════════════════════════════════════
+        const links = aiSummary.external_links || {};
+        html += `<div id="section-links" class="report-section">
+            <div class="section-header" onclick="toggleSection('links')">
+                <span class="section-icon">🔗</span> External Links & Resources
+                <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">
+                <div class="external-links">
+                    ${links.da_portal ? `<a href="${links.da_portal}" target="_blank" class="ext-link">📋 Development-i Portal</a>` : ''}
+                    ${links.scc_planning_scheme ? `<a href="${links.scc_planning_scheme}" target="_blank" class="ext-link">📖 Zone Code (Planning Scheme)</a>` : ''}
+                    <a href="${links.scc_pd_online || 'https://pdonline.sunshinecoast.qld.gov.au/'}" target="_blank" class="ext-link">🏛️ SCC PD Online</a>
+                    ${links.qld_globe ? `<a href="${links.qld_globe}" target="_blank" class="ext-link">🌏 QLD Globe</a>` : ''}
+                    <a href="https://www.sunshinecoast.qld.gov.au/development/planning-documents/sunshine-coast-planning-scheme-2014" target="_blank" class="ext-link">📕 SCC Planning Scheme</a>
+                    <a href="https://www.business.qld.gov.au/running-business/support-assistance/mapping-data-imagery/maps/qld-globe" target="_blank" class="ext-link">🗺️ QLD Globe (Full)</a>
+                </div>
+            </div>
+        </div>`;
+
         reportDiv.innerHTML = html;
 
-        // ── Initialize maps after DOM render ──
+        // ── Initialize maps ──
         setTimeout(() => {
             initLocationMap(geometry, si);
             initZoneMap(geometry, si, mapUrls, zone);
-            initOverlayMaps(geometry, si, overlays, mapUrls);
             initInfraMap(geometry, si, infra);
-            initContourMap(geometry, si, mapUrls);
-        }, 100);
+            initInfraMap2(geometry, si, infra);
+            initContourMap(geometry, si);
+            initOverlayAllMap(geometry, si, overlays, mapUrls);
+        }, 150);
     }
 
-    // ─── Map Initialization ───
-
-    function initLocationMap(geometry, si) {
-        const el = document.getElementById('locationMap');
-        if (!el) return;
-
-        const lat = si.centroid?.lat || -26.65;
-        const lng = si.centroid?.lng || 153.07;
-
-        const map = L.map(el).setView([lat, lng], 16);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 20,
-            attribution: 'Esri World Imagery'
-        }).addTo(map);
-
-        // Parcel boundary
-        if (geometry) {
-            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
-                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.15 }
-            }).addTo(map);
-            map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40], maxZoom: 18 });
-        }
-
-        // Labels overlay
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 20, opacity: 0.8
-        }).addTo(map);
-
-        maps['location'] = map;
-    }
-
-    // SCC zone colors (from MapServer legend)
+    /* ═══════════════════════════════════════════════════════════════════════
+       MAP INITIALIZERS
+       ═══════════════════════════════════════════════════════════════════════ */
     const ZONE_COLORS = {
         "Low Density Residential": "#ffdcdc",
         "Medium Density Residential": "#ffa4a4",
@@ -1079,558 +1800,203 @@
         "Low Impact Industry": "#e1c8e1",
         "Medium Impact Industry": "#c88fc8",
         "High Impact Industry": "#af56af",
-        "Waterfront & Marine Industry": "#553c9b",
         "Community Facilities": "#ffff64",
         "Emerging Community": "#e8beaf",
-        "Limited Development (Landscape Res.)": "#faaf32",
         "Rural": "#f0fae6",
         "Rural Residential": "#a07878",
         "Specialised Centre": "#a9a9a9",
-        "Tourism": "#b3d234",
+        "Mixed Use": "#b3d234",
     };
 
-    function initZoneMap(geometry, si, mapUrls, zone) {
-        const lat = si.centroid?.lat || -26.65;
-        const lng = si.centroid?.lng || 153.07;
-        const zoneLabel = ((zone || {}).label || '').replace(' Zone', '');
+    function _parcelLayer(geometry) {
+        if (!geometry) return null;
+        return L.geoJSON({type:'Feature', geometry, properties:{}}, {
+            style: { color: '#EF4444', weight: 3, fillColor: '#EF4444', fillOpacity: 0.08, dashArray: '6,4' }
+        });
+    }
 
-        // ── Small thumbnail map (inline beside zone details) ──
-        const thumbEl = document.getElementById('zoneMapThumb');
-        if (thumbEl) {
-            const thumbMap = L.map(thumbEl, { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.3 }).addTo(thumbMap);
-            if (window.L.esri) {
-                L.esri.dynamicMapLayer({
-                    url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Zoning_SCC/MapServer',
-                    opacity: 0.65, layers: [5],
-                }).addTo(thumbMap);
-            }
-            if (geometry) {
-                const p = L.geoJSON({type:'Feature', geometry, properties:{}}, {
-                    style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
-                }).addTo(thumbMap);
-                thumbMap.fitBounds(p.getBounds(), { padding: [20, 20], maxZoom: 17 });
-            }
-            maps['zoneThumb'] = thumbMap;
+    function initLocationMap(geometry, si) {
+        const el = document.getElementById('locationMap');
+        if (!el) return;
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
+        const map = L.map(el).setView([lat, lng], 16);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20, attribution: 'Esri' }).addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20, opacity: 0.8 }).addTo(map);
+        if (geometry) {
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [40, 40], maxZoom: 18 });
         }
+        maps['location'] = map;
+    }
 
-        // ── Full-width zone map with legend ──
+    function initZoneMap(geometry, si, mapUrls, zone) {
         const el = document.getElementById('zoneMap');
         if (!el) return;
-
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
+        const zoneLabel = ((zone || {}).label || '').replace(' Zone', '');
         const map = L.map(el).setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 20, opacity: 0.3
-        }).addTo(map);
-
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.3 }).addTo(map);
         if (window.L.esri) {
             L.esri.dynamicMapLayer({
                 url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Zoning_SCC/MapServer',
                 opacity: 0.65, layers: [5],
             }).addTo(map);
         }
-
         if (geometry) {
-            const parcelLayer = L.geoJSON({type:'Feature', geometry, properties:{}}, {
-                style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
-            }).addTo(map);
-            map.fitBounds(parcelLayer.getBounds(), { padding: [60, 60], maxZoom: 16 });
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [60, 60], maxZoom: 16 });
         }
-
-        // Zone legend control
+        // Legend
         const legend = L.control({ position: 'bottomright' });
         legend.onAdd = function() {
             const div = L.DomUtil.create('div', 'zone-legend');
-            div.innerHTML = '<div class="zone-legend-title">SCC Planning Zones</div>';
+            div.innerHTML = '<div class="zone-legend-title">Zones</div>';
             for (const [name, color] of Object.entries(ZONE_COLORS)) {
                 const isActive = zoneLabel && name.toLowerCase().startsWith(zoneLabel.toLowerCase().split(' ')[0].toLowerCase());
-                div.innerHTML += `<div class="zone-legend-item${isActive ? ' active' : ''}">` +
-                    `<span class="zone-legend-swatch" style="background:${color}"></span>${name}</div>`;
+                div.innerHTML += `<div class="zone-legend-item${isActive ? ' active' : ''}"><span class="zone-legend-swatch" style="background:${color}"></span>${name}</div>`;
             }
             return div;
         };
         legend.addTo(map);
-
         maps['zone'] = map;
     }
 
-    function initOverlayMaps(geometry, si, overlays, mapUrls) {
-        const lat = si.centroid?.lat || -26.65;
-        const lng = si.centroid?.lng || 153.07;
-
-        overlays.forEach((group, idx) => {
-            const el = document.getElementById(`overlayMap_${idx}`);
-            if (!el) return;
-
-            const layerIds = (group.layers || []).map(l => l.layer_id);
-            if (!layerIds.length) return;
-
-            const map = L.map(el).setView([lat, lng], 16);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 20, opacity: 0.3
-            }).addTo(map);
-
-            // SCC Overlay via esri-leaflet dynamic map layer
-            if (window.L.esri) {
-                L.esri.dynamicMapLayer({
-                    url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Overlays_SCC/MapServer',
-                    opacity: 0.65,
-                    layers: layerIds,
-                }).addTo(map);
+    function _drawInfraOnMap(map, infra) {
+        const waterGeoms = infra.water?.geometries || [];
+        waterGeoms.forEach(item => {
+            if (item.geometry?.paths) {
+                item.geometry.paths.forEach(path => {
+                    L.polyline(path.map(p => [p[1], p[0]]), { color: '#2563EB', weight: 3, opacity: 0.8 })
+                        .addTo(map).bindPopup(`Water Main${item.diameter ? ' — '+item.diameter+'mm' : ''}`);
+                });
             }
-
-            // Parcel boundary
-            if (geometry) {
-                const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
-                    style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
-                }).addTo(map);
-                map.fitBounds(parcelLayer.getBounds(), { padding: [30, 30], maxZoom: 17 });
+        });
+        const sewerGeoms = infra.sewer?.geometries || [];
+        sewerGeoms.forEach(item => {
+            if (item.geometry?.paths) {
+                item.geometry.paths.forEach(path => {
+                    L.polyline(path.map(p => [p[1], p[0]]), { color: '#8B4513', weight: 3, opacity: 0.8, dashArray: '8,4' })
+                        .addTo(map).bindPopup(`Sewer Main${item.diameter ? ' — '+item.diameter+'mm' : ''}`);
+                });
             }
-
-            maps[`overlay_${idx}`] = map;
+        });
+        const swGeoms = infra.stormwater?.geometries || [];
+        swGeoms.forEach(item => {
+            if (item.geometry?.paths) {
+                item.geometry.paths.forEach(path => {
+                    L.polyline(path.map(p => [p[1], p[0]]), { color: '#10B981', weight: 3, opacity: 0.8, dashArray: item.type === 'stormwater_culvert' ? '4,4' : null })
+                        .addTo(map).bindPopup(`${item.type === 'stormwater_culvert' ? 'Culvert' : 'SW Pipe'}${item.diameter ? ' — '+item.diameter+'mm' : ''}`);
+                });
+            }
+        });
+        (infra.stormwater?.pit_geometries || []).forEach(item => {
+            if (item.geometry?.x !== undefined) {
+                L.circleMarker([item.geometry.y, item.geometry.x], { radius: 4, color: '#10B981', fillColor: '#10B981', fillOpacity: 0.9, weight: 1 })
+                    .addTo(map).bindPopup('SW Pit');
+            }
+        });
+        (infra.water?.hydrant_geometries || []).forEach(item => {
+            if (item.geometry?.x !== undefined) {
+                L.circleMarker([item.geometry.y, item.geometry.x], { radius: 5, color: '#EF4444', fillColor: '#EF4444', fillOpacity: 0.9, weight: 1 })
+                    .addTo(map).bindPopup('Fire Hydrant');
+            }
         });
     }
 
-    // ─── Infrastructure Map ───
     function initInfraMap(geometry, si, infra) {
         const el = document.getElementById('infraMap');
         if (!el) return;
-
-        const lat = si.centroid?.lat || -26.65;
-        const lng = si.centroid?.lng || 153.07;
-
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
         const map = L.map(el).setView([lat, lng], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 20, opacity: 0.5
-        }).addTo(map);
-
-        // Parcel boundary
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.5 }).addTo(map);
         if (geometry) {
-            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
-                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.1, dashArray: '5,5' }
-            }).addTo(map);
-            map.fitBounds(parcelLayer.getBounds(), { padding: [50, 50], maxZoom: 17 });
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [50, 50], maxZoom: 17 });
         }
-
-        // Draw water mains (blue)
-        const waterGeoms = (infra.water?.geometries || []);
-        waterGeoms.forEach(item => {
-            const geom = item.geometry;
-            if (geom && geom.paths) {
-                geom.paths.forEach(path => {
-                    const latlngs = path.map(p => [p[1], p[0]]);
-                    L.polyline(latlngs, {
-                        color: '#2980B9', weight: 3, opacity: 0.8
-                    }).addTo(map).bindPopup(`Water Main${item.diameter ? ' — ' + item.diameter + 'mm' : ''}${item.material ? ' ' + item.material : ''}`);
-                });
-            }
-        });
-
-        // Draw sewer mains (brown)
-        const sewerGeoms = (infra.sewer?.geometries || []);
-        sewerGeoms.forEach(item => {
-            const geom = item.geometry;
-            if (geom && geom.paths) {
-                geom.paths.forEach(path => {
-                    const latlngs = path.map(p => [p[1], p[0]]);
-                    L.polyline(latlngs, {
-                        color: '#8B4513', weight: 3, opacity: 0.8, dashArray: '8,4'
-                    }).addTo(map).bindPopup(`Sewer ${item.type === 'sewer_pressure' ? 'Pressure' : 'Gravity'} Main${item.diameter ? ' — ' + item.diameter + 'mm' : ''}`);
-                });
-            }
-        });
-
-        // Draw stormwater pipes (green)
-        const swGeoms = (infra.stormwater?.geometries || []);
-        swGeoms.forEach(item => {
-            const geom = item.geometry;
-            if (geom && geom.paths) {
-                geom.paths.forEach(path => {
-                    const latlngs = path.map(p => [p[1], p[0]]);
-                    const isCulvert = item.type === 'stormwater_culvert';
-                    L.polyline(latlngs, {
-                        color: '#27AE60', weight: 3, opacity: 0.8,
-                        dashArray: isCulvert ? '4,4' : null
-                    }).addTo(map).bindPopup(
-                        `${isCulvert ? 'SW Culvert' : 'SW Pipe'}${item.diameter ? ' — ' + item.diameter + 'mm' : ''}${item.material ? ' ' + item.material : ''}`
-                    );
-                });
-            }
-        });
-
-        // Draw stormwater pits (green squares)
-        const swPitGeoms = (infra.stormwater?.pit_geometries || []);
-        swPitGeoms.forEach(item => {
-            const geom = item.geometry;
-            if (geom && geom.x !== undefined && geom.y !== undefined) {
-                L.circleMarker([geom.y, geom.x], {
-                    radius: 4, color: '#27AE60', fillColor: '#27AE60', fillOpacity: 0.9, weight: 1
-                }).addTo(map).bindPopup(`SW Pit${item.inlet_type ? ' — ' + item.inlet_type : ''}`);
-            }
-        });
-
-        // Draw hydrants (red dots)
-        const hydrantGeoms = (infra.water?.hydrant_geometries || []);
-        hydrantGeoms.forEach(item => {
-            const geom = item.geometry;
-            if (geom && geom.x !== undefined && geom.y !== undefined) {
-                L.circleMarker([geom.y, geom.x], {
-                    radius: 5, color: '#E74C3C', fillColor: '#E74C3C', fillOpacity: 0.9, weight: 1
-                }).addTo(map).bindPopup('Fire Hydrant');
-            }
-        });
-
+        _drawInfraOnMap(map, infra);
         maps['infra'] = map;
     }
 
-    // ─── Contour Map ───
-    function initContourMap(geometry, si, mapUrls) {
+    function initInfraMap2(geometry, si, infra) {
+        const el = document.getElementById('infraMap2');
+        if (!el) return;
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
+        const map = L.map(el).setView([lat, lng], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.5 }).addTo(map);
+        if (geometry) {
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [50, 50], maxZoom: 17 });
+        }
+        _drawInfraOnMap(map, infra);
+        maps['infra2'] = map;
+    }
+
+    function initContourMap(geometry, si) {
         const el = document.getElementById('contourMap');
         if (!el) return;
-
-        const lat = si.centroid?.lat || -26.65;
-        const lng = si.centroid?.lng || 153.07;
-
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
         const map = L.map(el, { minZoom: 13, maxZoom: 16 }).setView([lat, lng], 15);
-
-        // Light base so contour lines stand out
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 16, opacity: 0.3
-        }).addTo(map);
-
-        // QLD State Contours (pre-rendered cached tiles — reliable z0–z16)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 16, opacity: 0.3 }).addTo(map);
         if (window.L.esri) {
             L.esri.tiledMapLayer({
                 url: 'https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Elevation/ContoursCache/MapServer',
-                opacity: 0.9,
-                maxZoom: 16,
+                opacity: 0.9, maxZoom: 16,
             }).addTo(map);
         }
-
-        // Parcel boundary
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, opacity: 0.4 }).addTo(map);
         if (geometry) {
-            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
-                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.05, dashArray: '5,5' }
-            }).addTo(map);
-            map.fitBounds(parcelLayer.getBounds(), { padding: [60, 60], maxZoom: 15 });
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [60, 60], maxZoom: 15 });
         }
-
-        // Road labels
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 16, opacity: 0.4
-        }).addTo(map);
-
         maps['contour'] = map;
     }
 
-    // ─── Render Infrastructure Section ───
-    function renderInfrastructure(infra, si) {
-        const water = infra.water || {};
-        const sewer = infra.sewer || {};
-        const stormwater = infra.stormwater || {};
-
-        let html = `
-        <div class="report-section">
-            <div class="section-header infrastructure">🚰 Infrastructure Services</div>
-            <div class="section-body">
-                <div class="infra-cards">`;
-
-        // Water card
-        const wClass = water.available ? 'available' : 'unavailable';
-        const wStatus = water.available ? 'yes' : 'no';
-        html += `
-            <div class="infra-card ${wClass}">
-                <div class="infra-card-header">
-                    <span class="infra-card-icon">🚰</span>
-                    <span class="infra-card-title">Water Supply</span>
-                </div>
-                <div class="infra-card-status ${wStatus}">${water.summary || (water.available ? '✅ Available' : '❌ Not Available')}</div>`;
-        if (water.available) {
-            html += `
-                <div class="infra-card-details">
-                    <div class="detail-row"><span class="detail-label">Mains within 100m</span><span class="detail-value">${water.mains_count || 0}</span></div>
-                    ${water.nearest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Nearest diameter</span><span class="detail-value">${water.nearest_diameter_mm}mm</span></div>` : ''}
-                    ${water.nearest_material ? `<div class="detail-row"><span class="detail-label">Material</span><span class="detail-value">${water.nearest_material}</span></div>` : ''}
-                    <div class="detail-row"><span class="detail-label">Hydrants nearby</span><span class="detail-value">${water.hydrants_nearby || 0}</span></div>
-                </div>`;
-        } else {
-            html += `<div class="infra-card-details" style="color:#c0392b;font-weight:500;">Property requires on-site water supply (rainwater tank or bore)</div>`;
+    function initOverlayAllMap(geometry, si, overlays, mapUrls) {
+        const el = document.getElementById('overlayAllMap');
+        if (!el) return;
+        const lat = si.centroid?.lat || -26.65, lng = si.centroid?.lng || 153.07;
+        const map = L.map(el).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.3 }).addTo(map);
+        // Show all overlay layers
+        const allLayerIds = [];
+        overlays.forEach(g => (g.layers || []).forEach(l => { if (l.layer_id !== undefined) allLayerIds.push(l.layer_id); }));
+        if (window.L.esri && allLayerIds.length) {
+            L.esri.dynamicMapLayer({
+                url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Overlays_SCC/MapServer',
+                opacity: 0.65, layers: allLayerIds,
+            }).addTo(map);
         }
-        html += `</div>`;
-
-        // Sewer card
-        const sClass = sewer.available ? 'available' : 'unavailable';
-        const sStatus = sewer.available ? 'yes' : 'no';
-        html += `
-            <div class="infra-card ${sClass}">
-                <div class="infra-card-header">
-                    <span class="infra-card-icon">🏗️</span>
-                    <span class="infra-card-title">Sewer</span>
-                </div>
-                <div class="infra-card-status ${sStatus}">${sewer.summary || (sewer.available ? '✅ Available' : '❌ Not Available')}</div>`;
-        if (sewer.available) {
-            html += `
-                <div class="infra-card-details">
-                    <div class="detail-row"><span class="detail-label">Mains within 100m</span><span class="detail-value">${sewer.mains_count || 0}</span></div>
-                    ${sewer.nearest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Nearest diameter</span><span class="detail-value">${sewer.nearest_diameter_mm}mm</span></div>` : ''}
-                    ${sewer.nearest_type ? `<div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${sewer.nearest_type}</span></div>` : ''}
-                    ${sewer.gravity_count ? `<div class="detail-row"><span class="detail-label">Gravity mains</span><span class="detail-value">${sewer.gravity_count}</span></div>` : ''}
-                    ${sewer.pressure_count ? `<div class="detail-row"><span class="detail-label">Pressure mains</span><span class="detail-value">${sewer.pressure_count}</span></div>` : ''}
-                </div>`;
-        } else {
-            html += `<div class="infra-card-details" style="color:#c0392b;font-weight:500;">Property requires on-site effluent disposal system</div>`;
+        if (geometry) {
+            const pl = _parcelLayer(geometry).addTo(map);
+            map.fitBounds(pl.getBounds(), { padding: [60, 60], maxZoom: 16 });
         }
-        html += `</div>`;
-
-        // Stormwater card
-        const swClass = stormwater.available ? 'available' : 'info';
-        const swStatusClass = stormwater.available ? 'yes' : 'neutral';
-        html += `
-            <div class="infra-card ${swClass}">
-                <div class="infra-card-header">
-                    <span class="infra-card-icon">🌊</span>
-                    <span class="infra-card-title">Stormwater Network</span>
-                </div>
-                <div class="infra-card-status ${swStatusClass}">${stormwater.summary || 'No data'}</div>
-                <div class="infra-card-details">
-                    <div class="detail-row"><span class="detail-label">Pipes within 200m</span><span class="detail-value">${stormwater.pipe_count || 0}</span></div>
-                    <div class="detail-row"><span class="detail-label">Pits within 200m</span><span class="detail-value">${stormwater.pit_count || 0}</span></div>
-                    ${stormwater.culvert_count ? `<div class="detail-row"><span class="detail-label">Culverts</span><span class="detail-value">${stormwater.culvert_count}</span></div>` : ''}
-                    ${stormwater.largest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Largest pipe</span><span class="detail-value">${stormwater.largest_diameter_mm}mm</span></div>` : ''}
-                    <div class="detail-row"><span class="detail-label">Waterways within 200m</span><span class="detail-value">${stormwater.nearby_waterways || 0}</span></div>
-                    ${stormwater.drainage_info ? `<div class="detail-row"><span class="detail-label">Catchment</span><span class="detail-value">${stormwater.drainage_info}</span></div>` : ''}
-                </div>
-            </div>`;
-
-        html += `</div>`;
-
-        // Infrastructure map
-        html += `
-                <p style="font-size:13px;color:var(--text-light);margin-bottom:4px;">
-                    <span style="color:#2980B9;">━━</span> Water &nbsp;
-                    <span style="color:#8B4513;">━━</span> Sewer &nbsp;
-                    <span style="color:#27AE60;">━━</span> Stormwater &nbsp;
-                    <span style="color:#E74C3C;">●</span> Hydrants &nbsp;
-                    <span style="color:#27AE60;">■</span> SW Pits
-                </p>
-                <div id="infraMap" class="map-container small"></div>
-            </div>
-        </div>`;
-
-        return html;
+        maps['overlayAll'] = map;
     }
 
-    // ─── Render Development Applications Section ───
-    function renderDevelopmentApplications(da, si) {
-        const onParcel = da.on_parcel || [];
-        const nearby = da.nearby || [];
-        
-        let html = `
-        <div class="report-section">
-            <div class="section-header da-history">📋 Development Applications</div>
-            <div class="section-body">`;
-
-        // Summary
-        html += `<div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px;">`;
-        html += `<strong>${da.summary || 'No data available'}</strong>`;
-        if (da.portal_link) {
-            html += ` | <a href="${da.portal_link}" target="_blank" style="color:var(--primary);">View in Development-i portal</a>`;
-        }
-        html += `</div>`;
-
-        // On parcel applications
-        if (onParcel.length > 0) {
-            html += `<h4 style="margin-bottom:8px;color:var(--text);">📍 On This Parcel (${onParcel.length})</h4>`;
-            onParcel.forEach(app => {
-                const status = _getDAStatus(app);
-                html += `
-                <div class="da-card">
-                    <div class="da-header">
-                        <span class="da-ram-id">${app.ram_id || 'N/A'}</span>
-                        <span class="da-status ${status.class}">${status.text}</span>
-                    </div>
-                    <div class="da-description">${app.description || 'No description'}</div>
-                    <div class="da-meta">
-                        <span>${app.category || ''}</span>
-                        ${app.date_received ? `<span>Received: ${app.date_received}</span>` : ''}
-                        ${app.date_decided ? `<span>Decided: ${app.date_decided}</span>` : ''}
-                    </div>
-                </div>`;
-            });
-        }
-
-        // Nearby applications
-        if (nearby.length > 0) {
-            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📍 Nearby Applications (${nearby.length})</h4>`;
-            // Show first 5 nearby applications
-            const showNearby = nearby.slice(0, 5);
-            showNearby.forEach(app => {
-                const status = _getDAStatus(app);
-                html += `
-                <div class="da-card nearby">
-                    <div class="da-header">
-                        <span class="da-ram-id">${app.ram_id || 'N/A'}</span>
-                        <span class="da-status ${status.class}">${status.text}</span>
-                    </div>
-                    <div class="da-description">${app.description || 'No description'}</div>
-                    <div class="da-meta">
-                        <span>${app.category || ''}</span>
-                        ${app.date_received ? `<span>Received: ${app.date_received}</span>` : ''}
-                    </div>
-                </div>`;
-            });
-            if (nearby.length > 5) {
-                html += `<p style="font-size:13px;color:var(--text-light);margin-top:8px;">... and ${nearby.length - 5} more within 500m</p>`;
+    /* ═══════════════════════════════════════════════════════════════════════
+       SIDEBAR SCROLL TRACKING
+       ═══════════════════════════════════════════════════════════════════════ */
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                document.querySelectorAll('.sidebar-nav li a').forEach(a => a.classList.remove('active'));
+                const link = document.querySelector(`.sidebar-nav li a[href="#${id}"]`);
+                if (link) link.classList.add('active');
             }
-        }
+        });
+    }, { rootMargin: '-100px 0px -60% 0px' });
 
-        if (onParcel.length === 0 && nearby.length === 0) {
-            html += `<p style="color:var(--text-light);">No development applications found on parcel or within 500m.</p>`;
-        }
-
-        html += `</div></div>`;
-        return html;
+    // Re-observe when report renders
+    function observeSections() {
+        document.querySelectorAll('[id^="section-"]').forEach(el => observer.observe(el));
     }
+    const reportDiv = document.getElementById('report');
+    new MutationObserver(observeSections).observe(reportDiv, { childList: true });
 
-    function _getDAStatus(app) {
-        const decision = (app.decision || '').toLowerCase();
-        const progress = (app.progress || '').toLowerCase();
-        
-        if (decision.includes('approved')) {
-            return { class: 'approved', text: 'Approved' };
-        } else if (decision.includes('refused')) {
-            return { class: 'refused', text: 'Refused' };
-        } else if (decision.includes('lapsed')) {
-            return { class: 'lapsed', text: 'Lapsed' };
-        } else if (progress.includes('progress') || progress.includes('current')) {
-            return { class: 'in-progress', text: 'In Progress' };
-        } else {
-            return { class: 'decided', text: app.decision || 'Decided' };
-        }
-    }
-
-    // ─── Render Flood Information Section ───
-    function renderFloodInformation(flood, si) {
-        let html = `
-        <div class="report-section">
-            <div class="section-header flood">🌊 Flood Information</div>
-            <div class="section-body">`;
-
-        // Summary
-        const statusClass = flood.has_flood_data ? 'flood-warning' : 'flood-clear';
-        html += `<div class="flood-summary ${statusClass}">`;
-        html += `<strong>${flood.summary || 'No flood information available'}</strong>`;
-        html += `</div>`;
-
-        // Flood data
-        if (flood.has_flood_data && flood.flood_data) {
-            const data = flood.flood_data;
-            html += `<div class="flood-details">`;
-            if (data.max_flood_level) {
-                html += `<div class="flood-item"><strong>Flood Level:</strong> ${data.max_flood_level}</div>`;
-            }
-            if (data.min_floor_level) {
-                html += `<div class="flood-item"><strong>Minimum Floor Level:</strong> ${data.min_floor_level}</div>`;
-            }
-            if (data.freeboard) {
-                html += `<div class="flood-item"><strong>Freeboard:</strong> ${data.freeboard}</div>`;
-            }
-            if (data.velocity) {
-                html += `<div class="flood-item"><strong>Velocity:</strong> ${data.velocity}</div>`;
-            }
-            if (data.scenario) {
-                html += `<div class="flood-item"><strong>Scenario:</strong> ${data.scenario}</div>`;
-            }
-            if (data.source) {
-                html += `<div class="flood-item"><strong>Source:</strong> ${data.source}</div>`;
-            }
-            if (data.notes) {
-                html += `<div class="flood-item"><strong>Notes:</strong> ${data.notes}</div>`;
-            }
-            html += `</div>`;
-        }
-
-        // Flood studies
-        if (flood.has_flood_studies && flood.flood_studies && flood.flood_studies.length > 0) {
-            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📚 Flood Studies in Area</h4>`;
-            flood.flood_studies.forEach(study => {
-                html += `<div class="flood-study">`;
-                html += `<strong>${study.name}</strong>`;
-                if (study.authority || study.date) {
-                    html += `<div style="font-size:13px;color:var(--text-light);">`;
-                    if (study.authority) html += study.authority;
-                    if (study.authority && study.date) html += ' • ';
-                    if (study.date) html += study.date;
-                    html += `</div>`;
-                }
-                html += `</div>`;
-            });
-        }
-
-        html += `</div></div>`;
-        return html;
-    }
-
-    // ─── Render Constraints Section ───
-    function renderConstraints(constraints, si) {
-        let html = `
-        <div class="report-section">
-            <div class="section-header constraints">⚠️ Site Constraints & Easements</div>
-            <div class="section-body">`;
-
-        // Summary
-        html += `<div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px;">`;
-        html += `<strong>${constraints.summary || 'No constraints data available'}</strong>`;
-        html += `</div>`;
-
-        // Easements
-        if (constraints.easements && constraints.easements.length > 0) {
-            html += `<h4 style="margin-bottom:8px;color:var(--text);">📐 Easements (${constraints.easements.length})</h4>`;
-            constraints.easements.forEach(easement => {
-                html += `<div class="constraint-item">`;
-                html += `<strong>${easement.purpose || easement.name || 'Easement'}</strong>`;
-                if (easement.area) html += ` (${easement.area})`;
-                if (easement.in_favour) html += `<div style="font-size:13px;color:var(--text-light);">In favour: ${easement.in_favour}</div>`;
-                html += `</div>`;
-            });
-        }
-
-        // Covenants
-        if (constraints.covenants && constraints.covenants.length > 0) {
-            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📜 Covenants (${constraints.covenants.length})</h4>`;
-            constraints.covenants.forEach(covenant => {
-                html += `<div class="constraint-item">`;
-                html += `<strong>${covenant.purpose || covenant.name || 'Covenant'}</strong>`;
-                if (covenant.in_favour) html += `<div style="font-size:13px;color:var(--text-light);">In favour: ${covenant.in_favour}</div>`;
-                html += `</div>`;
-            });
-        }
-
-        // Environmental constraints
-        const envConstraints = [];
-        if (constraints.koala && constraints.koala.status) {
-            envConstraints.push(constraints.koala.status);
-        }
-        if (constraints.esa && constraints.esa.status) {
-            envConstraints.push(constraints.esa.status);
-        }
-
-        if (envConstraints.length > 0) {
-            html += `<h4 style="margin:16px 0 8px;color:var(--text);">🌿 Environmental Constraints</h4>`;
-            envConstraints.forEach(constraint => {
-                html += `<div class="constraint-item environmental">🌿 ${constraint}</div>`;
-            });
-        }
-
-        if (!constraints.has_constraints) {
-            html += `<p style="color:var(--text-light);">No significant site constraints identified.</p>`;
-        }
-
-        html += `</div></div>`;
-        return html;
-    }
-
-    // ─── URL hash support ───
+    /* ═══════════════════════════════════════════════════════════════════════
+       URL HASH SUPPORT
+       ═══════════════════════════════════════════════════════════════════════ */
     function parseHash() {
         const hash = window.location.hash.slice(1);
         if (!hash) return;
