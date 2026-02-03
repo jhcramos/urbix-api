@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Urbix — Site Report</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #1B4F72;
+            --primary-light: #2980B9;
+            --accent: #E67E22;
+            --success: #27AE60;
+            --danger: #E74C3C;
+            --warning: #F39C12;
+            --text: #2C3E50;
+            --text-light: #7F8C8D;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --border: #E5E8EB;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+        /* Header */
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header .subtitle { font-size: 13px; opacity: 0.8; }
+        .header-right { font-size: 12px; opacity: 0.6; }
+
+        /* Search Area */
+        .search-area {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 24px 32px;
+        }
+        .search-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .search-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .search-tab {
+            padding: 6px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        .search-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .search-row {
+            display: flex;
+            gap: 12px;
+        }
+        .search-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        .search-row input:focus {
+            border-color: var(--primary-light);
+            outline: none;
+        }
+        .search-row input.small { flex: 0 0 120px; }
+        .search-btn {
+            padding: 12px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .search-btn:hover { background: var(--primary-light); }
+        .search-btn:disabled { background: #95a5a6; cursor: not-allowed; }
+        .search-input-group { display: none; }
+        .search-input-group.active { display: flex; }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .autocomplete-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .autocomplete-item:hover { background: #f0f4ff; }
+        .autocomplete-item .addr { font-weight: 500; }
+        .autocomplete-item .meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .search-input-wrapper { position: relative; flex: 1; }
+
+        /* Report Container */
+        .report-container {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        /* Loading state */
+        .loading-overlay {
+            display: none;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .loading-overlay.active { display: block; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Welcome state */
+        .welcome {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-light);
+        }
+        .welcome h2 { font-size: 28px; color: var(--text); margin-bottom: 8px; }
+        .welcome p { font-size: 16px; max-width: 500px; margin: 0 auto; }
+
+        /* Report Section */
+        .report-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: var(--primary);
+            color: white;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header.zone { background: #2E86C1; }
+        .section-header.overlays { background: #D35400; }
+        .section-header.buildability { background: #27AE60; }
+        .section-header.transport { background: #8E44AD; }
+        .section-body { padding: 20px 24px; }
+
+        /* Info Table */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+        }
+        .info-table td:first-child {
+            font-weight: 600;
+            color: var(--text-light);
+            width: 160px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .info-table td:last-child {
+            font-weight: 500;
+        }
+        .info-table tr:last-child td { border-bottom: none; }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-zone {
+            background: #2E86C1;
+            color: white;
+            font-size: 15px;
+            padding: 6px 16px;
+            border-radius: 6px;
+        }
+        .tag-freehold { background: #d4edda; color: #155724; }
+        .tag-leasehold { background: #fff3cd; color: #856404; }
+
+        /* Map container */
+        .map-container {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            min-height: 300px;
+        }
+        .map-container.location { height: 380px; }
+        .map-container.small { height: 320px; margin-top: 12px; }
+
+        /* Zone section */
+        .zone-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+        }
+        .zone-details { flex: 1; }
+        .zone-map-wrapper { flex: 0 0 300px; }
+        .zone-name { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .zone-category { font-size: 14px; color: var(--text-light); margin-bottom: 12px; }
+
+        /* Overlay items */
+        .overlay-group {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .overlay-group-header {
+            background: #fef9f0;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .overlay-group-body { padding: 12px 16px; }
+        .overlay-layer-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid #f8f8f8;
+        }
+        .overlay-layer-item:last-child { border-bottom: none; }
+        .overlay-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot-bushfire { background: #E74C3C; }
+        .dot-flood { background: #3498DB; }
+        .dot-biodiversity { background: #27AE60; }
+        .dot-height { background: #9B59B6; }
+        .dot-heritage { background: #F39C12; }
+        .dot-landslide { background: #E67E22; }
+        .dot-steep { background: #95A5A6; }
+        .dot-coastal { background: #1ABC9C; }
+        .dot-infrastructure { background: #34495E; }
+        .dot-scenic { background: #2ECC71; }
+        .dot-water { background: #2980B9; }
+        .dot-acid { background: #D35400; }
+        .dot-default { background: #7F8C8D; }
+
+        .overlay-map-img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            background: #f5f5f5;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        /* Buildability Grid */
+        .build-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .build-metric {
+            background: #f8fffe;
+            border: 1px solid #e0f0ed;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .build-metric .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--success);
+        }
+        .build-metric .label {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        /* Rules table */
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .rules-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: #f0f4f8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+        }
+        .rules-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+        }
+
+        /* Uses */
+        .uses-section { margin-top: 16px; }
+        .uses-heading {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .uses-heading.accepted { color: var(--success); }
+        .uses-heading.assessable { color: var(--warning); }
+        .uses-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .use-tag {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .use-tag.accepted { background: #e8f8f0; color: #1a7a4a; }
+        .use-tag.assessable { background: #fef5e6; color: #9a6400; }
+
+        /* Constraints */
+        .constraint-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #fff8f0;
+            border: 1px solid #fdebd0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .constraint-icon { font-size: 18px; flex-shrink: 0; }
+
+        /* Subdivision */
+        .subdiv-box {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        .subdiv-box.can { background: #e8f8f0; border: 1px solid #b8e6cc; }
+        .subdiv-box.cannot { background: #fdf0f0; border: 1px solid #f0c0c0; }
+
+        /* Transport */
+        .transport-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 14px;
+        }
+
+        /* Infrastructure Section */
+        .section-header.infrastructure { background: #0E6655; }
+        .section-header.da-history { background: #1B2631; }
+        .section-header.flood { background: #D4AC0D; }
+        .section-header.constraints { background: #922B21; }
+        .section-header.contour { background: #6C3483; }
+        .infra-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .infra-card {
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid;
+        }
+        .infra-card.available {
+            background: #e8f8f0;
+            border-color: #27AE60;
+        }
+        .infra-card.unavailable {
+            background: #fdf0f0;
+            border-color: #E74C3C;
+        }
+        .infra-card.info {
+            background: #eaf2f8;
+            border-color: #2980B9;
+        }
+        .infra-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .infra-card-icon { font-size: 28px; }
+        .infra-card-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .infra-card-status {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .infra-card-status.yes { color: #1a7a4a; }
+        .infra-card-status.no { color: #c0392b; }
+        .infra-card-status.neutral { color: #2471a3; }
+        .infra-card-details {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .infra-card-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+        .infra-card-details .detail-label { font-weight: 500; }
+        .infra-card-details .detail-value { font-weight: 600; color: var(--text); }
+
+        /* Development Applications */
+        .da-card {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+        }
+        .da-card.nearby {
+            background: #f8f9fa;
+        }
+        .da-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .da-ram-id {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary);
+        }
+        .da-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .da-status.approved { background: #d4edda; color: #155724; }
+        .da-status.refused { background: #f8d7da; color: #721c24; }
+        .da-status.lapsed { background: #fff3cd; color: #856404; }
+        .da-status.in-progress { background: #cce5ff; color: #004085; }
+        .da-status.decided { background: #e2e3e5; color: #383d41; }
+        .da-description {
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .da-meta {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Flood Information */
+        .flood-summary {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .flood-summary.flood-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .flood-summary.flood-clear {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .flood-details {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .flood-item {
+            padding: 4px 0;
+            font-size: 14px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .flood-item:last-child {
+            border-bottom: none;
+        }
+        .flood-study {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .flood-study:last-child {
+            border-bottom: none;
+        }
+
+        /* Constraints */
+        .constraint-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+        .constraint-item:last-child {
+            border-bottom: none;
+        }
+        .constraint-item.environmental {
+            color: #155724;
+        }
+
+        /* Zone Legend */
+        .zone-legend {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(4px);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            line-height: 1.6;
+            max-height: 280px;
+            overflow-y: auto;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .zone-legend-title {
+            font-weight: 700;
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .zone-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .zone-legend-item.active {
+            font-weight: 700;
+            color: var(--text);
+        }
+        .zone-legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; }
+            .search-area { padding: 16px; }
+            .report-container { padding: 0 12px; margin: 12px auto; }
+            .zone-info { flex-direction: column; }
+            .zone-map-wrapper { flex: 1; width: 100%; }
+            .build-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-row { flex-direction: column; }
+            .search-row input.small { flex: 1; }
+        }
+
+        /* Print styles */
+        @media print {
+            .header, .search-area { display: none; }
+            .report-container { max-width: 100%; margin: 0; padding: 0; }
+            .report-section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🏗️ Urbix</h1>
+            <span class="subtitle">Sunshine Coast Planning & Site Report</span>
+        </div>
+        <div class="header-right">Powered by SCC Planning Data</div>
+    </div>
+
+    <div class="search-area">
+        <div class="search-container">
+            <div class="search-tabs">
+                <div class="search-tab active" data-tab="address" onclick="switchTab('address')">📍 Address</div>
+                <div class="search-tab" data-tab="lotplan" onclick="switchTab('lotplan')">📋 Lot / Plan</div>
+                <div class="search-tab" data-tab="coords" onclick="switchTab('coords')">🗺️ Coordinates</div>
+            </div>
+
+            <div class="search-input-group active" id="tab-address">
+                <div class="search-row">
+                    <div class="search-input-wrapper">
+                        <input type="text" id="addressInput" placeholder="Search address (e.g. 134 Kirbys Rd Montville)..." autocomplete="off">
+                        <div id="autocompleteList" class="autocomplete-list" style="display:none;"></div>
+                    </div>
+                    <button class="search-btn" onclick="searchByAddress()">Search</button>
+                </div>
+            </div>
+
+            <div class="search-input-group" id="tab-lotplan">
+                <div class="search-row">
+                    <input type="text" id="lotInput" placeholder="Lot (e.g. 6)" class="small">
+                    <input type="text" id="planInput" placeholder="Plan (e.g. RP901532)" class="small" style="flex:1;">
+                    <button class="search-btn" onclick="searchByLotPlan()">Search</button>
+                </div>
+            </div>
+
+            <div class="search-input-group" id="tab-coords">
+                <div class="search-row">
+                    <input type="text" id="latInput" placeholder="Latitude (e.g. -26.7086)" class="small">
+                    <input type="text" id="lngInput" placeholder="Longitude (e.g. 152.9072)" class="small">
+                    <button class="search-btn" onclick="searchByCoords()">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-container">
+        <div id="welcome" class="welcome">
+            <h2>🏠 Sunshine Coast Site Report</h2>
+            <p>Search for any property on the Sunshine Coast to generate a full planning report with zoning, overlays, and buildability analysis.</p>
+        </div>
+
+        <div id="loading" class="loading-overlay">
+            <div class="spinner"></div>
+            <div style="font-size:16px;color:var(--text);">Generating site report...</div>
+            <div style="font-size:13px;color:var(--text-light);margin-top:4px;">Querying SCC planning services</div>
+        </div>
+
+        <div id="report" style="display:none;"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+    <script>
+    const API = '';
+    let searchTimeout;
+    let maps = {};
+
+    // ─── Tab switching ───
+    function switchTab(tab) {
+        document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.search-input-group').forEach(g => g.classList.remove('active'));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // ─── Autocomplete ───
+    const addrInput = document.getElementById('addressInput');
+    const acList = document.getElementById('autocompleteList');
+
+    addrInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const q = addrInput.value.trim();
+        if (q.length < 3) { acList.style.display = 'none'; return; }
+        searchTimeout = setTimeout(() => doAutocomplete(q), 300);
+    });
+
+    addrInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { acList.style.display = 'none'; searchByAddress(); }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!acList.contains(e.target) && e.target !== addrInput) acList.style.display = 'none';
+    });
+
+    async function doAutocomplete(q) {
+        try {
+            const resp = await fetch(`${API}/v1/search?q=${encodeURIComponent(q)}&limit=8`);
+            const data = await resp.json();
+            if (!data.results || !data.results.length) { acList.style.display = 'none'; return; }
+            acList.innerHTML = data.results.map(r => `
+                <div class="autocomplete-item" onclick="selectAutocomplete('${escape(r.address||'')}', '${r.lot||''}', '${r.plan||''}', ${r.lat}, ${r.lng})">
+                    <div class="addr">${r.address || r.street_name || ''}</div>
+                    <div class="meta">${r.lot ? `Lot ${r.lot}/${r.plan}` : ''} ${r.locality || ''}</div>
+                </div>
+            `).join('');
+            acList.style.display = 'block';
+        } catch { acList.style.display = 'none'; }
+    }
+
+    function selectAutocomplete(address, lot, plan, lat, lng) {
+        acList.style.display = 'none';
+        addrInput.value = unescape(address);
+        if (lot && plan && lot !== 'null' && lot !== 'undefined') {
+            loadReport(`lot=${lot}&plan=${plan}`);
+        } else if (lat && lng) {
+            loadReport(`lat=${lat}&lng=${lng}`);
+        } else {
+            searchByAddress();
+        }
+    }
+
+    // ─── Search handlers ───
+    function searchByAddress() {
+        const addr = addrInput.value.trim();
+        if (!addr) return;
+        loadReport(`address=${encodeURIComponent(addr)}`);
+    }
+
+    function searchByLotPlan() {
+        const lot = document.getElementById('lotInput').value.trim();
+        const plan = document.getElementById('planInput').value.trim();
+        if (!lot || !plan) return;
+        loadReport(`lot=${lot}&plan=${plan}`);
+    }
+
+    function searchByCoords() {
+        const lat = document.getElementById('latInput').value.trim();
+        const lng = document.getElementById('lngInput').value.trim();
+        if (!lat || !lng) return;
+        loadReport(`lat=${lat}&lng=${lng}`);
+    }
+
+    // ─── Load Report ───
+    async function loadReport(params) {
+        document.getElementById('welcome').style.display = 'none';
+        document.getElementById('report').style.display = 'none';
+        document.getElementById('loading').classList.add('active');
+
+        try {
+            const resp = await fetch(`${API}/v1/site-report?${params}`);
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({detail:'Unknown error'}));
+                throw new Error(err.detail || 'Request failed');
+            }
+            const data = await resp.json();
+            renderReport(data);
+        } catch (err) {
+            document.getElementById('loading').classList.remove('active');
+            document.getElementById('report').style.display = 'block';
+            document.getElementById('report').innerHTML = `
+                <div class="report-section">
+                    <div class="section-header" style="background:var(--danger);">❌ Error</div>
+                    <div class="section-body"><p>${err.message}</p></div>
+                </div>`;
+        }
+    }
+
+    // ─── Render Report ───
+    function renderReport(data) {
+        document.getElementById('loading').classList.remove('active');
+        const reportDiv = document.getElementById('report');
+        reportDiv.style.display = 'block';
+
+        const si = data.site_info || {};
+        const zone = data.zone || {};
+        const overlays = data.overlays || [];
+        const build = data.buildability || {};
+        const height = data.height;
+        const transport = data.transport || [];
+        const geometry = data.geometry;
+        const mapUrls = data.maps || {};
+
+        let html = '';
+
+        // ── 1. Site Information ──
+        const tenureClass = (si.tenure||'').toLowerCase().includes('freehold') ? 'tag-freehold' : 'tag-leasehold';
+        html += `
+        <div class="report-section">
+            <div class="section-header">📋 Site Information</div>
+            <div class="section-body">
+                <table class="info-table">
+                    <tr><td>Address</td><td>${si.address || '—'}</td></tr>
+                    <tr><td>Lot / Plan</td><td><strong>${si.lot_plan || '—'}</strong></td></tr>
+                    <tr><td>Area</td><td>${si.area_sqm ? Number(si.area_sqm).toLocaleString() + ' m²' : '—'}</td></tr>
+                    <tr><td>Tenure</td><td>${si.tenure ? `<span class="tag ${tenureClass}">${si.tenure}</span>` : '—'}</td></tr>
+                    <tr><td>Locality</td><td>${si.locality || '—'}</td></tr>
+                    <tr><td>LGA</td><td>${si.shire_name || 'Sunshine Coast Regional Council'}</td></tr>
+                </table>
+                <div id="locationMap" class="map-container location"></div>
+            </div>
+        </div>`;
+
+        // ── 2. Zone ──
+        html += `
+        <div class="report-section">
+            <div class="section-header zone">🗺️ Planning Zone</div>
+            <div class="section-body">
+                <div class="zone-info">
+                    <div class="zone-details">
+                        <div class="zone-name">${zone.code || zone.label || '—'}</div>
+                        <div class="zone-category">${zone.category || ''}</div>
+                        <table class="info-table" style="margin-top:12px;">
+                            <tr><td>Zone Code</td><td>${zone.label || zone.code || '—'}</td></tr>
+                            <tr><td>Category</td><td>${zone.category || '—'}</td></tr>
+                            <tr><td>Planning Scheme</td><td>Sunshine Coast Planning Scheme 2014</td></tr>
+                            ${height ? `<tr><td>Max Height</td><td><strong>${height.label || height.height_m + 'm'}</strong></td></tr>` : ''}
+                        </table>
+                    </div>
+                    <div class="zone-map-wrapper">
+                        <div id="zoneMapThumb" class="map-container small"></div>
+                    </div>
+                </div>
+                <div id="zoneMap" class="map-container" style="height:400px; margin-top:12px;"></div>
+            </div>
+        </div>`;
+
+        // ── 3. Overlays ──
+        if (overlays.length > 0) {
+            html += `
+            <div class="report-section">
+                <div class="section-header overlays">⚠️ Planning Overlays (${overlays.length} ${overlays.length === 1 ? 'category' : 'categories'})</div>
+                <div class="section-body">`;
+
+            overlays.forEach((group, idx) => {
+                const catLower = group.category.toLowerCase();
+                let dotClass = 'dot-default';
+                let icon = '📌';
+                if (catLower.includes('bushfire')) { dotClass = 'dot-bushfire'; icon = '🔥'; }
+                else if (catLower.includes('flood')) { dotClass = 'dot-flood'; icon = '🌊'; }
+                else if (catLower.includes('biodiversity') || catLower.includes('waterway') || catLower.includes('wetland')) { dotClass = 'dot-biodiversity'; icon = '🌿'; }
+                else if (catLower.includes('height')) { dotClass = 'dot-height'; icon = '📏'; }
+                else if (catLower.includes('heritage') || catLower.includes('character')) { dotClass = 'dot-heritage'; icon = '🏛️'; }
+                else if (catLower.includes('landslide')) { dotClass = 'dot-landslide'; icon = '⛰️'; }
+                else if (catLower.includes('steep') || catLower.includes('slope')) { dotClass = 'dot-steep'; icon = '📐'; }
+                else if (catLower.includes('coastal')) { dotClass = 'dot-coastal'; icon = '🏖️'; }
+                else if (catLower.includes('infrastructure')) { dotClass = 'dot-infrastructure'; icon = '🏗️'; }
+                else if (catLower.includes('scenic')) { dotClass = 'dot-scenic'; icon = '🌄'; }
+                else if (catLower.includes('water')) { dotClass = 'dot-water'; icon = '💧'; }
+                else if (catLower.includes('acid')) { dotClass = 'dot-acid'; icon = '⚗️'; }
+
+                html += `
+                <div class="overlay-group">
+                    <div class="overlay-group-header">${icon} ${group.category}</div>
+                    <div class="overlay-group-body">`;
+
+                (group.layers || []).forEach(layer => {
+                    let extra = '';
+                    if (layer.height_m) extra = ` — <strong>${layer.height_m}m</strong>`;
+                    html += `
+                        <div class="overlay-layer-item">
+                            <div class="overlay-dot ${dotClass}"></div>
+                            <span>${layer.label || layer.name}${extra}</span>
+                        </div>`;
+                });
+
+                // Overlay map
+                const layerIds = (group.layers || []).map(l => l.layer_id);
+                if (layerIds.length > 0 && mapUrls.bbox) {
+                    const bbox = mapUrls.bbox;
+                    const overlayMapUrl = `https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Overlays_SCC/MapServer/export?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}&bboxSR=4326&imageSR=4326&size=500,250&layers=show:${layerIds.join(',')}&format=png&transparent=true&f=image`;
+                    html += `<div id="overlayMap_${idx}" class="map-container small"></div>`;
+                }
+
+                html += `</div></div>`;
+            });
+
+            html += `</div></div>`;
+        }
+
+        // ── 3b. Development Applications ──
+        const da = data.da_history || {};
+        html += renderDevelopmentApplications(da, si);
+
+        // ── 3c. Infrastructure Services ──
+        const infra = data.infrastructure || {};
+        html += renderInfrastructure(infra, si);
+
+        // ── 3d. Flood Information ──
+        const flood = data.flood_info || {};
+        html += renderFloodInformation(flood, si);
+
+        // ── 3e. Site Constraints & Easements ──
+        const constraints = data.constraints || {};
+        html += renderConstraints(constraints, si);
+
+        // ── 3f. Contour Map ──
+        html += `
+        <div class="report-section">
+            <div class="section-header contour">📐 Contours & Elevation</div>
+            <div class="section-body">
+                <p style="font-size:13px;color:var(--text-light);margin-bottom:8px;">QLD LiDAR contours (1m/5m) — zoom in for detail</p>
+                <div id="contourMap" class="map-container small"></div>
+            </div>
+        </div>`;
+
+        // ── 4. Buildability ──
+        if (build && !build.error) {
+            const rules = build.rules || {};
+            const envelope = build.buildable_envelope || {};
+            const uses = build.uses || {};
+            const subdiv = build.subdivision || {};
+            const constraints = build.constraints || [];
+
+            html += `
+            <div class="report-section">
+                <div class="section-header buildability">🏗️ Buildability Analysis</div>
+                <div class="section-body">
+                    <div class="build-grid">
+                        ${rules.max_height_m ? `<div class="build-metric"><div class="value">${rules.max_height_m}m</div><div class="label">Max Height</div></div>` : ''}
+                        ${rules.max_storeys ? `<div class="build-metric"><div class="value">${rules.max_storeys}</div><div class="label">Max Storeys</div></div>` : ''}
+                        ${rules.max_site_cover_pct ? `<div class="build-metric"><div class="value">${rules.max_site_cover_pct}%</div><div class="label">Site Cover</div></div>` : ''}
+                        ${envelope.max_gfa_sqm ? `<div class="build-metric"><div class="value">${Math.round(envelope.max_gfa_sqm).toLocaleString()}</div><div class="label">Max GFA (m²)</div></div>` : ''}
+                        ${envelope.max_footprint_sqm ? `<div class="build-metric"><div class="value">${Math.round(envelope.max_footprint_sqm).toLocaleString()}</div><div class="label">Max Footprint (m²)</div></div>` : ''}
+                        ${envelope.max_dwellings !== undefined ? `<div class="build-metric"><div class="value">${envelope.max_dwellings}</div><div class="label">Max Dwellings</div></div>` : ''}
+                    </div>
+
+                    <table class="rules-table">
+                        <tr><th colspan="2">Planning Rules — ${zone.code || 'Zone'}</th></tr>
+                        ${rules.front_setback_m !== null && rules.front_setback_m !== undefined ? `<tr><td>Front Setback</td><td>${rules.front_setback_m}m</td></tr>` : ''}
+                        ${rules.side_setback_m !== null && rules.side_setback_m !== undefined ? `<tr><td>Side Setback</td><td>${rules.side_setback_m}m</td></tr>` : ''}
+                        ${rules.rear_setback_m !== null && rules.rear_setback_m !== undefined ? `<tr><td>Rear Setback</td><td>${rules.rear_setback_m}m</td></tr>` : ''}
+                        ${rules.min_lot_size_sqm ? `<tr><td>Min Lot Size</td><td>${Number(rules.min_lot_size_sqm).toLocaleString()} m²</td></tr>` : ''}
+                        ${rules.min_frontage_m ? `<tr><td>Min Frontage</td><td>${rules.min_frontage_m}m</td></tr>` : ''}
+                    </table>`;
+
+            // Uses
+            if ((uses.accepted && uses.accepted.length) || (uses.assessable && uses.assessable.length)) {
+                html += `<div class="uses-section">`;
+                if (uses.accepted && uses.accepted.length) {
+                    html += `<div class="uses-heading accepted">✅ Accepted Uses</div>
+                        <div class="uses-list">${uses.accepted.map(u => `<span class="use-tag accepted">${u}</span>`).join('')}</div>`;
+                }
+                if (uses.assessable && uses.assessable.length) {
+                    html += `<div class="uses-heading assessable">📋 Assessable Uses</div>
+                        <div class="uses-list">${uses.assessable.map(u => `<span class="use-tag assessable">${u}</span>`).join('')}</div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Subdivision
+            if (subdiv.can_subdivide !== undefined) {
+                if (subdiv.can_subdivide) {
+                    html += `<div class="subdiv-box can">✅ <strong>Subdivision potential:</strong> Up to ${subdiv.max_new_lots} lots (min ${Number(subdiv.min_lot_size_sqm||0).toLocaleString()} m² each)</div>`;
+                } else {
+                    html += `<div class="subdiv-box cannot">❌ <strong>Cannot subdivide</strong> under current zoning (lot too small or zone doesn't permit)</div>`;
+                }
+            }
+
+            // Constraints
+            if (constraints.length) {
+                html += `<div style="margin-top:16px;"><h4 style="font-size:14px;margin-bottom:8px;">⚠️ Site Constraints</h4>`;
+                constraints.forEach(c => {
+                    const icon = c.icon || '📌';
+                    const text = c.text || c;
+                    html += `<div class="constraint-item"><span class="constraint-icon">${icon}</span><span>${text}</span></div>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `
+                    <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;font-size:12px;color:var(--text-light);">
+                        ${build.disclaimer || 'Indicative only. Always verify with Council.'}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ── 5. Transport ──
+        if (transport.length > 0) {
+            html += `
+            <div class="report-section">
+                <div class="section-header transport">🛣️ Transport Hierarchy</div>
+                <div class="section-body">`;
+            transport.forEach(t => {
+                html += `<div class="transport-item">
+                    <strong>${t.heading || ''}</strong>
+                    <span style="color:var(--text-light)">${t.label || ''}</span>
+                </div>`;
+            });
+            html += `</div></div>`;
+        }
+
+        reportDiv.innerHTML = html;
+
+        // ── Initialize maps after DOM render ──
+        setTimeout(() => {
+            initLocationMap(geometry, si);
+            initZoneMap(geometry, si, mapUrls, zone);
+            initOverlayMaps(geometry, si, overlays, mapUrls);
+            initInfraMap(geometry, si, infra);
+            initContourMap(geometry, si, mapUrls);
+        }, 100);
+    }
+
+    // ─── Map Initialization ───
+
+    function initLocationMap(geometry, si) {
+        const el = document.getElementById('locationMap');
+        if (!el) return;
+
+        const lat = si.centroid?.lat || -26.65;
+        const lng = si.centroid?.lng || 153.07;
+
+        const map = L.map(el).setView([lat, lng], 16);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 20,
+            attribution: 'Esri World Imagery'
+        }).addTo(map);
+
+        // Parcel boundary
+        if (geometry) {
+            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
+                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.15 }
+            }).addTo(map);
+            map.fitBounds(parcelLayer.getBounds(), { padding: [40, 40], maxZoom: 18 });
+        }
+
+        // Labels overlay
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 20, opacity: 0.8
+        }).addTo(map);
+
+        maps['location'] = map;
+    }
+
+    // SCC zone colors (from MapServer legend)
+    const ZONE_COLORS = {
+        "Low Density Residential": "#ffdcdc",
+        "Medium Density Residential": "#ffa4a4",
+        "High Density Residential": "#aa0000",
+        "Tourist Accommodation": "#ff3232",
+        "Principal Centre": "#0032ff",
+        "Major Centre": "#426bff",
+        "District Centre": "#7082aa",
+        "Local Centre": "#86a6ff",
+        "Sport and Recreation": "#afe1c8",
+        "Open Space": "#6eaf4b",
+        "Environmental Mgmt & Conservation": "#327d00",
+        "Low Impact Industry": "#e1c8e1",
+        "Medium Impact Industry": "#c88fc8",
+        "High Impact Industry": "#af56af",
+        "Waterfront & Marine Industry": "#553c9b",
+        "Community Facilities": "#ffff64",
+        "Emerging Community": "#e8beaf",
+        "Limited Development (Landscape Res.)": "#faaf32",
+        "Rural": "#f0fae6",
+        "Rural Residential": "#a07878",
+        "Specialised Centre": "#a9a9a9",
+        "Tourism": "#b3d234",
+    };
+
+    function initZoneMap(geometry, si, mapUrls, zone) {
+        const lat = si.centroid?.lat || -26.65;
+        const lng = si.centroid?.lng || 153.07;
+        const zoneLabel = ((zone || {}).label || '').replace(' Zone', '');
+
+        // ── Small thumbnail map (inline beside zone details) ──
+        const thumbEl = document.getElementById('zoneMapThumb');
+        if (thumbEl) {
+            const thumbMap = L.map(thumbEl, { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, opacity: 0.3 }).addTo(thumbMap);
+            if (window.L.esri) {
+                L.esri.dynamicMapLayer({
+                    url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Zoning_SCC/MapServer',
+                    opacity: 0.65, layers: [5],
+                }).addTo(thumbMap);
+            }
+            if (geometry) {
+                const p = L.geoJSON({type:'Feature', geometry, properties:{}}, {
+                    style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
+                }).addTo(thumbMap);
+                thumbMap.fitBounds(p.getBounds(), { padding: [20, 20], maxZoom: 17 });
+            }
+            maps['zoneThumb'] = thumbMap;
+        }
+
+        // ── Full-width zone map with legend ──
+        const el = document.getElementById('zoneMap');
+        if (!el) return;
+
+        const map = L.map(el).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20, opacity: 0.3
+        }).addTo(map);
+
+        if (window.L.esri) {
+            L.esri.dynamicMapLayer({
+                url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Zoning_SCC/MapServer',
+                opacity: 0.65, layers: [5],
+            }).addTo(map);
+        }
+
+        if (geometry) {
+            const parcelLayer = L.geoJSON({type:'Feature', geometry, properties:{}}, {
+                style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
+            }).addTo(map);
+            map.fitBounds(parcelLayer.getBounds(), { padding: [60, 60], maxZoom: 16 });
+        }
+
+        // Zone legend control
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'zone-legend');
+            div.innerHTML = '<div class="zone-legend-title">SCC Planning Zones</div>';
+            for (const [name, color] of Object.entries(ZONE_COLORS)) {
+                const isActive = zoneLabel && name.toLowerCase().startsWith(zoneLabel.toLowerCase().split(' ')[0].toLowerCase());
+                div.innerHTML += `<div class="zone-legend-item${isActive ? ' active' : ''}">` +
+                    `<span class="zone-legend-swatch" style="background:${color}"></span>${name}</div>`;
+            }
+            return div;
+        };
+        legend.addTo(map);
+
+        maps['zone'] = map;
+    }
+
+    function initOverlayMaps(geometry, si, overlays, mapUrls) {
+        const lat = si.centroid?.lat || -26.65;
+        const lng = si.centroid?.lng || 153.07;
+
+        overlays.forEach((group, idx) => {
+            const el = document.getElementById(`overlayMap_${idx}`);
+            if (!el) return;
+
+            const layerIds = (group.layers || []).map(l => l.layer_id);
+            if (!layerIds.length) return;
+
+            const map = L.map(el).setView([lat, lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 20, opacity: 0.3
+            }).addTo(map);
+
+            // SCC Overlay via esri-leaflet dynamic map layer
+            if (window.L.esri) {
+                L.esri.dynamicMapLayer({
+                    url: 'https://geoimage.scc.qld.gov.au/arcgis/rest/services/PlanningCadastre/PlanningScheme_SunshineCoast_Overlays_SCC/MapServer',
+                    opacity: 0.65,
+                    layers: layerIds,
+                }).addTo(map);
+            }
+
+            // Parcel boundary
+            if (geometry) {
+                const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
+                    style: { color: '#E74C3C', weight: 3, fillColor: 'transparent', dashArray: '5,5' }
+                }).addTo(map);
+                map.fitBounds(parcelLayer.getBounds(), { padding: [30, 30], maxZoom: 17 });
+            }
+
+            maps[`overlay_${idx}`] = map;
+        });
+    }
+
+    // ─── Infrastructure Map ───
+    function initInfraMap(geometry, si, infra) {
+        const el = document.getElementById('infraMap');
+        if (!el) return;
+
+        const lat = si.centroid?.lat || -26.65;
+        const lng = si.centroid?.lng || 153.07;
+
+        const map = L.map(el).setView([lat, lng], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20, opacity: 0.5
+        }).addTo(map);
+
+        // Parcel boundary
+        if (geometry) {
+            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
+                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.1, dashArray: '5,5' }
+            }).addTo(map);
+            map.fitBounds(parcelLayer.getBounds(), { padding: [50, 50], maxZoom: 17 });
+        }
+
+        // Draw water mains (blue)
+        const waterGeoms = (infra.water?.geometries || []);
+        waterGeoms.forEach(item => {
+            const geom = item.geometry;
+            if (geom && geom.paths) {
+                geom.paths.forEach(path => {
+                    const latlngs = path.map(p => [p[1], p[0]]);
+                    L.polyline(latlngs, {
+                        color: '#2980B9', weight: 3, opacity: 0.8
+                    }).addTo(map).bindPopup(`Water Main${item.diameter ? ' — ' + item.diameter + 'mm' : ''}${item.material ? ' ' + item.material : ''}`);
+                });
+            }
+        });
+
+        // Draw sewer mains (brown)
+        const sewerGeoms = (infra.sewer?.geometries || []);
+        sewerGeoms.forEach(item => {
+            const geom = item.geometry;
+            if (geom && geom.paths) {
+                geom.paths.forEach(path => {
+                    const latlngs = path.map(p => [p[1], p[0]]);
+                    L.polyline(latlngs, {
+                        color: '#8B4513', weight: 3, opacity: 0.8, dashArray: '8,4'
+                    }).addTo(map).bindPopup(`Sewer ${item.type === 'sewer_pressure' ? 'Pressure' : 'Gravity'} Main${item.diameter ? ' — ' + item.diameter + 'mm' : ''}`);
+                });
+            }
+        });
+
+        // Draw stormwater pipes (green)
+        const swGeoms = (infra.stormwater?.geometries || []);
+        swGeoms.forEach(item => {
+            const geom = item.geometry;
+            if (geom && geom.paths) {
+                geom.paths.forEach(path => {
+                    const latlngs = path.map(p => [p[1], p[0]]);
+                    const isCulvert = item.type === 'stormwater_culvert';
+                    L.polyline(latlngs, {
+                        color: '#27AE60', weight: 3, opacity: 0.8,
+                        dashArray: isCulvert ? '4,4' : null
+                    }).addTo(map).bindPopup(
+                        `${isCulvert ? 'SW Culvert' : 'SW Pipe'}${item.diameter ? ' — ' + item.diameter + 'mm' : ''}${item.material ? ' ' + item.material : ''}`
+                    );
+                });
+            }
+        });
+
+        // Draw stormwater pits (green squares)
+        const swPitGeoms = (infra.stormwater?.pit_geometries || []);
+        swPitGeoms.forEach(item => {
+            const geom = item.geometry;
+            if (geom && geom.x !== undefined && geom.y !== undefined) {
+                L.circleMarker([geom.y, geom.x], {
+                    radius: 4, color: '#27AE60', fillColor: '#27AE60', fillOpacity: 0.9, weight: 1
+                }).addTo(map).bindPopup(`SW Pit${item.inlet_type ? ' — ' + item.inlet_type : ''}`);
+            }
+        });
+
+        // Draw hydrants (red dots)
+        const hydrantGeoms = (infra.water?.hydrant_geometries || []);
+        hydrantGeoms.forEach(item => {
+            const geom = item.geometry;
+            if (geom && geom.x !== undefined && geom.y !== undefined) {
+                L.circleMarker([geom.y, geom.x], {
+                    radius: 5, color: '#E74C3C', fillColor: '#E74C3C', fillOpacity: 0.9, weight: 1
+                }).addTo(map).bindPopup('Fire Hydrant');
+            }
+        });
+
+        maps['infra'] = map;
+    }
+
+    // ─── Contour Map ───
+    function initContourMap(geometry, si, mapUrls) {
+        const el = document.getElementById('contourMap');
+        if (!el) return;
+
+        const lat = si.centroid?.lat || -26.65;
+        const lng = si.centroid?.lng || 153.07;
+
+        const map = L.map(el, { minZoom: 13, maxZoom: 16 }).setView([lat, lng], 15);
+
+        // Light base so contour lines stand out
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 16, opacity: 0.3
+        }).addTo(map);
+
+        // QLD State Contours (pre-rendered cached tiles — reliable z0–z16)
+        if (window.L.esri) {
+            L.esri.tiledMapLayer({
+                url: 'https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Elevation/ContoursCache/MapServer',
+                opacity: 0.9,
+                maxZoom: 16,
+            }).addTo(map);
+        }
+
+        // Parcel boundary
+        if (geometry) {
+            const parcelLayer = L.geoJSON({type:'Feature', geometry: geometry, properties:{}}, {
+                style: { color: '#E74C3C', weight: 3, fillColor: '#E74C3C', fillOpacity: 0.05, dashArray: '5,5' }
+            }).addTo(map);
+            map.fitBounds(parcelLayer.getBounds(), { padding: [60, 60], maxZoom: 15 });
+        }
+
+        // Road labels
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 16, opacity: 0.4
+        }).addTo(map);
+
+        maps['contour'] = map;
+    }
+
+    // ─── Render Infrastructure Section ───
+    function renderInfrastructure(infra, si) {
+        const water = infra.water || {};
+        const sewer = infra.sewer || {};
+        const stormwater = infra.stormwater || {};
+
+        let html = `
+        <div class="report-section">
+            <div class="section-header infrastructure">🚰 Infrastructure Services</div>
+            <div class="section-body">
+                <div class="infra-cards">`;
+
+        // Water card
+        const wClass = water.available ? 'available' : 'unavailable';
+        const wStatus = water.available ? 'yes' : 'no';
+        html += `
+            <div class="infra-card ${wClass}">
+                <div class="infra-card-header">
+                    <span class="infra-card-icon">🚰</span>
+                    <span class="infra-card-title">Water Supply</span>
+                </div>
+                <div class="infra-card-status ${wStatus}">${water.summary || (water.available ? '✅ Available' : '❌ Not Available')}</div>`;
+        if (water.available) {
+            html += `
+                <div class="infra-card-details">
+                    <div class="detail-row"><span class="detail-label">Mains within 100m</span><span class="detail-value">${water.mains_count || 0}</span></div>
+                    ${water.nearest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Nearest diameter</span><span class="detail-value">${water.nearest_diameter_mm}mm</span></div>` : ''}
+                    ${water.nearest_material ? `<div class="detail-row"><span class="detail-label">Material</span><span class="detail-value">${water.nearest_material}</span></div>` : ''}
+                    <div class="detail-row"><span class="detail-label">Hydrants nearby</span><span class="detail-value">${water.hydrants_nearby || 0}</span></div>
+                </div>`;
+        } else {
+            html += `<div class="infra-card-details" style="color:#c0392b;font-weight:500;">Property requires on-site water supply (rainwater tank or bore)</div>`;
+        }
+        html += `</div>`;
+
+        // Sewer card
+        const sClass = sewer.available ? 'available' : 'unavailable';
+        const sStatus = sewer.available ? 'yes' : 'no';
+        html += `
+            <div class="infra-card ${sClass}">
+                <div class="infra-card-header">
+                    <span class="infra-card-icon">🏗️</span>
+                    <span class="infra-card-title">Sewer</span>
+                </div>
+                <div class="infra-card-status ${sStatus}">${sewer.summary || (sewer.available ? '✅ Available' : '❌ Not Available')}</div>`;
+        if (sewer.available) {
+            html += `
+                <div class="infra-card-details">
+                    <div class="detail-row"><span class="detail-label">Mains within 100m</span><span class="detail-value">${sewer.mains_count || 0}</span></div>
+                    ${sewer.nearest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Nearest diameter</span><span class="detail-value">${sewer.nearest_diameter_mm}mm</span></div>` : ''}
+                    ${sewer.nearest_type ? `<div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${sewer.nearest_type}</span></div>` : ''}
+                    ${sewer.gravity_count ? `<div class="detail-row"><span class="detail-label">Gravity mains</span><span class="detail-value">${sewer.gravity_count}</span></div>` : ''}
+                    ${sewer.pressure_count ? `<div class="detail-row"><span class="detail-label">Pressure mains</span><span class="detail-value">${sewer.pressure_count}</span></div>` : ''}
+                </div>`;
+        } else {
+            html += `<div class="infra-card-details" style="color:#c0392b;font-weight:500;">Property requires on-site effluent disposal system</div>`;
+        }
+        html += `</div>`;
+
+        // Stormwater card
+        const swClass = stormwater.available ? 'available' : 'info';
+        const swStatusClass = stormwater.available ? 'yes' : 'neutral';
+        html += `
+            <div class="infra-card ${swClass}">
+                <div class="infra-card-header">
+                    <span class="infra-card-icon">🌊</span>
+                    <span class="infra-card-title">Stormwater Network</span>
+                </div>
+                <div class="infra-card-status ${swStatusClass}">${stormwater.summary || 'No data'}</div>
+                <div class="infra-card-details">
+                    <div class="detail-row"><span class="detail-label">Pipes within 200m</span><span class="detail-value">${stormwater.pipe_count || 0}</span></div>
+                    <div class="detail-row"><span class="detail-label">Pits within 200m</span><span class="detail-value">${stormwater.pit_count || 0}</span></div>
+                    ${stormwater.culvert_count ? `<div class="detail-row"><span class="detail-label">Culverts</span><span class="detail-value">${stormwater.culvert_count}</span></div>` : ''}
+                    ${stormwater.largest_diameter_mm ? `<div class="detail-row"><span class="detail-label">Largest pipe</span><span class="detail-value">${stormwater.largest_diameter_mm}mm</span></div>` : ''}
+                    <div class="detail-row"><span class="detail-label">Waterways within 200m</span><span class="detail-value">${stormwater.nearby_waterways || 0}</span></div>
+                    ${stormwater.drainage_info ? `<div class="detail-row"><span class="detail-label">Catchment</span><span class="detail-value">${stormwater.drainage_info}</span></div>` : ''}
+                </div>
+            </div>`;
+
+        html += `</div>`;
+
+        // Infrastructure map
+        html += `
+                <p style="font-size:13px;color:var(--text-light);margin-bottom:4px;">
+                    <span style="color:#2980B9;">━━</span> Water &nbsp;
+                    <span style="color:#8B4513;">━━</span> Sewer &nbsp;
+                    <span style="color:#27AE60;">━━</span> Stormwater &nbsp;
+                    <span style="color:#E74C3C;">●</span> Hydrants &nbsp;
+                    <span style="color:#27AE60;">■</span> SW Pits
+                </p>
+                <div id="infraMap" class="map-container small"></div>
+            </div>
+        </div>`;
+
+        return html;
+    }
+
+    // ─── Render Development Applications Section ───
+    function renderDevelopmentApplications(da, si) {
+        const onParcel = da.on_parcel || [];
+        const nearby = da.nearby || [];
+        
+        let html = `
+        <div class="report-section">
+            <div class="section-header da-history">📋 Development Applications</div>
+            <div class="section-body">`;
+
+        // Summary
+        html += `<div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px;">`;
+        html += `<strong>${da.summary || 'No data available'}</strong>`;
+        if (da.portal_link) {
+            html += ` | <a href="${da.portal_link}" target="_blank" style="color:var(--primary);">View in Development-i portal</a>`;
+        }
+        html += `</div>`;
+
+        // On parcel applications
+        if (onParcel.length > 0) {
+            html += `<h4 style="margin-bottom:8px;color:var(--text);">📍 On This Parcel (${onParcel.length})</h4>`;
+            onParcel.forEach(app => {
+                const status = _getDAStatus(app);
+                html += `
+                <div class="da-card">
+                    <div class="da-header">
+                        <span class="da-ram-id">${app.ram_id || 'N/A'}</span>
+                        <span class="da-status ${status.class}">${status.text}</span>
+                    </div>
+                    <div class="da-description">${app.description || 'No description'}</div>
+                    <div class="da-meta">
+                        <span>${app.category || ''}</span>
+                        ${app.date_received ? `<span>Received: ${app.date_received}</span>` : ''}
+                        ${app.date_decided ? `<span>Decided: ${app.date_decided}</span>` : ''}
+                    </div>
+                </div>`;
+            });
+        }
+
+        // Nearby applications
+        if (nearby.length > 0) {
+            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📍 Nearby Applications (${nearby.length})</h4>`;
+            // Show first 5 nearby applications
+            const showNearby = nearby.slice(0, 5);
+            showNearby.forEach(app => {
+                const status = _getDAStatus(app);
+                html += `
+                <div class="da-card nearby">
+                    <div class="da-header">
+                        <span class="da-ram-id">${app.ram_id || 'N/A'}</span>
+                        <span class="da-status ${status.class}">${status.text}</span>
+                    </div>
+                    <div class="da-description">${app.description || 'No description'}</div>
+                    <div class="da-meta">
+                        <span>${app.category || ''}</span>
+                        ${app.date_received ? `<span>Received: ${app.date_received}</span>` : ''}
+                    </div>
+                </div>`;
+            });
+            if (nearby.length > 5) {
+                html += `<p style="font-size:13px;color:var(--text-light);margin-top:8px;">... and ${nearby.length - 5} more within 500m</p>`;
+            }
+        }
+
+        if (onParcel.length === 0 && nearby.length === 0) {
+            html += `<p style="color:var(--text-light);">No development applications found on parcel or within 500m.</p>`;
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    function _getDAStatus(app) {
+        const decision = (app.decision || '').toLowerCase();
+        const progress = (app.progress || '').toLowerCase();
+        
+        if (decision.includes('approved')) {
+            return { class: 'approved', text: 'Approved' };
+        } else if (decision.includes('refused')) {
+            return { class: 'refused', text: 'Refused' };
+        } else if (decision.includes('lapsed')) {
+            return { class: 'lapsed', text: 'Lapsed' };
+        } else if (progress.includes('progress') || progress.includes('current')) {
+            return { class: 'in-progress', text: 'In Progress' };
+        } else {
+            return { class: 'decided', text: app.decision || 'Decided' };
+        }
+    }
+
+    // ─── Render Flood Information Section ───
+    function renderFloodInformation(flood, si) {
+        let html = `
+        <div class="report-section">
+            <div class="section-header flood">🌊 Flood Information</div>
+            <div class="section-body">`;
+
+        // Summary
+        const statusClass = flood.has_flood_data ? 'flood-warning' : 'flood-clear';
+        html += `<div class="flood-summary ${statusClass}">`;
+        html += `<strong>${flood.summary || 'No flood information available'}</strong>`;
+        html += `</div>`;
+
+        // Flood data
+        if (flood.has_flood_data && flood.flood_data) {
+            const data = flood.flood_data;
+            html += `<div class="flood-details">`;
+            if (data.max_flood_level) {
+                html += `<div class="flood-item"><strong>Flood Level:</strong> ${data.max_flood_level}</div>`;
+            }
+            if (data.min_floor_level) {
+                html += `<div class="flood-item"><strong>Minimum Floor Level:</strong> ${data.min_floor_level}</div>`;
+            }
+            if (data.freeboard) {
+                html += `<div class="flood-item"><strong>Freeboard:</strong> ${data.freeboard}</div>`;
+            }
+            if (data.velocity) {
+                html += `<div class="flood-item"><strong>Velocity:</strong> ${data.velocity}</div>`;
+            }
+            if (data.scenario) {
+                html += `<div class="flood-item"><strong>Scenario:</strong> ${data.scenario}</div>`;
+            }
+            if (data.source) {
+                html += `<div class="flood-item"><strong>Source:</strong> ${data.source}</div>`;
+            }
+            if (data.notes) {
+                html += `<div class="flood-item"><strong>Notes:</strong> ${data.notes}</div>`;
+            }
+            html += `</div>`;
+        }
+
+        // Flood studies
+        if (flood.has_flood_studies && flood.flood_studies && flood.flood_studies.length > 0) {
+            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📚 Flood Studies in Area</h4>`;
+            flood.flood_studies.forEach(study => {
+                html += `<div class="flood-study">`;
+                html += `<strong>${study.name}</strong>`;
+                if (study.authority || study.date) {
+                    html += `<div style="font-size:13px;color:var(--text-light);">`;
+                    if (study.authority) html += study.authority;
+                    if (study.authority && study.date) html += ' • ';
+                    if (study.date) html += study.date;
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            });
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    // ─── Render Constraints Section ───
+    function renderConstraints(constraints, si) {
+        let html = `
+        <div class="report-section">
+            <div class="section-header constraints">⚠️ Site Constraints & Easements</div>
+            <div class="section-body">`;
+
+        // Summary
+        html += `<div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px;">`;
+        html += `<strong>${constraints.summary || 'No constraints data available'}</strong>`;
+        html += `</div>`;
+
+        // Easements
+        if (constraints.easements && constraints.easements.length > 0) {
+            html += `<h4 style="margin-bottom:8px;color:var(--text);">📐 Easements (${constraints.easements.length})</h4>`;
+            constraints.easements.forEach(easement => {
+                html += `<div class="constraint-item">`;
+                html += `<strong>${easement.purpose || easement.name || 'Easement'}</strong>`;
+                if (easement.area) html += ` (${easement.area})`;
+                if (easement.in_favour) html += `<div style="font-size:13px;color:var(--text-light);">In favour: ${easement.in_favour}</div>`;
+                html += `</div>`;
+            });
+        }
+
+        // Covenants
+        if (constraints.covenants && constraints.covenants.length > 0) {
+            html += `<h4 style="margin:16px 0 8px;color:var(--text);">📜 Covenants (${constraints.covenants.length})</h4>`;
+            constraints.covenants.forEach(covenant => {
+                html += `<div class="constraint-item">`;
+                html += `<strong>${covenant.purpose || covenant.name || 'Covenant'}</strong>`;
+                if (covenant.in_favour) html += `<div style="font-size:13px;color:var(--text-light);">In favour: ${covenant.in_favour}</div>`;
+                html += `</div>`;
+            });
+        }
+
+        // Environmental constraints
+        const envConstraints = [];
+        if (constraints.koala && constraints.koala.status) {
+            envConstraints.push(constraints.koala.status);
+        }
+        if (constraints.esa && constraints.esa.status) {
+            envConstraints.push(constraints.esa.status);
+        }
+
+        if (envConstraints.length > 0) {
+            html += `<h4 style="margin:16px 0 8px;color:var(--text);">🌿 Environmental Constraints</h4>`;
+            envConstraints.forEach(constraint => {
+                html += `<div class="constraint-item environmental">🌿 ${constraint}</div>`;
+            });
+        }
+
+        if (!constraints.has_constraints) {
+            html += `<p style="color:var(--text-light);">No significant site constraints identified.</p>`;
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    // ─── URL hash support ───
+    function parseHash() {
+        const hash = window.location.hash.slice(1);
+        if (!hash) return;
+        const params = new URLSearchParams(hash);
+        if (params.get('lot') && params.get('plan')) {
+            document.getElementById('lotInput').value = params.get('lot');
+            document.getElementById('planInput').value = params.get('plan');
+            switchTab('lotplan');
+            loadReport(`lot=${params.get('lot')}&plan=${params.get('plan')}`);
+        } else if (params.get('lat') && params.get('lng')) {
+            loadReport(`lat=${params.get('lat')}&lng=${params.get('lng')}`);
+        }
+    }
+    parseHash();
+    </script>
+</body>
+</html>
