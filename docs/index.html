@@ -1047,17 +1047,45 @@
 
     async function doAutocomplete(q) {
         try {
-            const resp = await fetch(`${API}/v1/search?q=${encodeURIComponent(q)}&limit=8`);
-            const data = await resp.json();
-            if (!data.results || !data.results.length) { acList.style.display = 'none'; return; }
-            acList.innerHTML = data.results.map(r => `
-                <div class="autocomplete-item" onclick="selectAutocomplete('${escape(r.address||'')}', '${r.lot||''}', '${r.plan||''}', ${r.lat}, ${r.lng})">
-                    <div class="addr">${r.address || r.street_name || ''}</div>
-                    <div class="meta">${r.lot ? `Lot ${r.lot}/${r.plan}` : ''} ${r.locality || ''}</div>
-                </div>
-            `).join('');
-            acList.style.display = 'block';
-        } catch { acList.style.display = 'none'; }
+            if (PAGES_MODE) {
+                // Direct QLD ArcGIS address search (no backend needed)
+                const arcgisUrl = 'https://spatial-gis.information.qld.gov.au/arcgis/rest/services/PlanningCadastre/LandParcelPropertyFramework/MapServer/0/query';
+                const qUpper = q.toUpperCase().replace(/\bST\b/g,'STREET').replace(/\bRD\b/g,'ROAD').replace(/\bAVE\b/g,'AVENUE').replace(/\bDR\b/g,'DRIVE').replace(/\bCT\b/g,'COURT').replace(/\bCR\b/g,'CRESCENT').replace(/\bPL\b/g,'PLACE');
+                const params = new URLSearchParams({
+                    where: `address LIKE '%${qUpper}%'`,
+                    outFields: 'address,lot,plan,locality',
+                    returnGeometry: 'true',
+                    outSR: '4326',
+                    resultRecordCount: '8',
+                    f: 'json'
+                });
+                const resp = await fetch(`${arcgisUrl}?${params}`);
+                const data = await resp.json();
+                const features = data.features || [];
+                if (!features.length) { acList.style.display = 'none'; return; }
+                acList.innerHTML = features.map(f => {
+                    const a = f.attributes || {};
+                    const g = f.geometry || {};
+                    const lat = g.y || 0, lng = g.x || 0;
+                    return `<div class="autocomplete-item" onclick="selectAutocomplete('${escape(a.address||'')}', '${a.lot||''}', '${a.plan||''}', ${lat}, ${lng})">
+                        <div class="addr">${a.address || ''}</div>
+                        <div class="meta">${a.lot ? 'Lot ' + a.lot + '/' + a.plan : ''} ${a.locality || ''}</div>
+                    </div>`;
+                }).join('');
+                acList.style.display = 'block';
+            } else {
+                const resp = await fetch(`${API}/v1/search?q=${encodeURIComponent(q)}&limit=8`);
+                const data = await resp.json();
+                if (!data.results || !data.results.length) { acList.style.display = 'none'; return; }
+                acList.innerHTML = data.results.map(r => `
+                    <div class="autocomplete-item" onclick="selectAutocomplete('${escape(r.address||'')}', '${r.lot||''}', '${r.plan||''}', ${r.lat}, ${r.lng})">
+                        <div class="addr">${r.address || r.street_name || ''}</div>
+                        <div class="meta">${r.lot ? `Lot ${r.lot}/${r.plan}` : ''} ${r.locality || ''}</div>
+                    </div>
+                `).join('');
+                acList.style.display = 'block';
+            }
+        } catch(e) { console.error('Autocomplete error:', e); acList.style.display = 'none'; }
     }
 
     function selectAutocomplete(address, lot, plan, lat, lng) {
